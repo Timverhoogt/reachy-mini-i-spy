@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16233f">
+  <title>Reachy Mini I Spy</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">Reachy Mini</p>
+      <h1>I Spy <span aria-hidden="true">👀</span></h1>
+    </div>
+    <div id="camera-badge" class="badge off" role="status">Camera off</div>
+  </header>
+
+  <main>
+    <section class="card game-card" aria-labelledby="game-heading">
+      <h2 id="game-heading">Game</h2>
+      <p id="state" class="state">Starting app…</p>
+      <p id="message" class="message" aria-live="polite">Please wait.</p>
+
+      <div class="grid two">
+        <label>Language
+          <select id="language"><option value="en">English</option><option value="nl">Nederlands</option></select>
+        </label>
+        <label>Age
+          <select id="age"><option>4-6</option><option selected>7-9</option><option>10-12</option></select>
+        </label>
+      </div>
+
+      <label class="consent">
+        <input id="camera-consent" type="checkbox">
+        <span><strong>Caregiver camera opt-in</strong><small>Use up to 3 temporary frames to choose an object. Frames are not saved.</small></span>
+      </label>
+
+      <div class="actions">
+        <button id="start" class="primary">Start / next round</button>
+      </div>
+
+      <form id="guess-form" autocomplete="off">
+        <label for="guess">Your guess</label>
+        <div class="guess-row">
+          <input id="guess" maxlength="80" placeholder="Say or type an object" disabled>
+          <button id="mic" type="button" class="secondary" aria-label="Speak a guess" disabled>🎤 Speak</button>
+          <button id="send" type="submit" class="secondary" disabled>Guess</button>
+        </div>
+        <small id="speech-note">Your browser's speech service may process audio; this app receives only the final guess and does not save it.</small>
+      </form>
+    </section>
+
+    <details class="card">
+      <summary>Caregiver Hermes broker settings</summary>
+      <p class="muted">Only a scoped I Spy broker token is stored on Reachy. Provider credentials stay on Hermes.</p>
+      <form id="settings-form" autocomplete="off">
+        <label>Caregiver access token<input id="caregiver-token" type="password" autocomplete="off" placeholder="Required for Start, guesses, and settings"></label>
+        <label>Hermes broker URL<input id="provider-url" type="url" required></label>
+        <label>Scoped broker token<input id="broker-token" type="password" autocomplete="new-password" placeholder="Leave blank to keep current token"></label>
+        <label>Broker-bound device ID<input id="device-id" maxlength="64" required></label>
+        <p class="muted">Models, prompts, limits, moderation, and provider credentials are fixed on Hermes and cannot be changed here.</p>
+        <button class="secondary" type="submit">Save private settings</button>
+        <span id="config-state" class="muted"></span>
+      </form>
+    </details>
+
+    <section class="privacy">
+      <strong>Private by design</strong>
+      <p>No saved frames, transcripts, child profiles, face recognition, memories, agent tools, or smart-home access.</p>
+    </section>
+  </main>
+
+  <button id="stop" class="stop" type="button">■ Stop &amp; camera off</button>
+  <div id="toast" role="alert" aria-live="assertive"></div>
+  <script src="/static/main.js"></script>
+</body>
+</html>

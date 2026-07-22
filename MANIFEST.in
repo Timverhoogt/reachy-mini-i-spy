@@ -1,0 +1,5 @@
+prune hermes_broker
+prune deploy
+prune scripts
+prune tests
+exclude plan.md

@@ -1,0 +1,16 @@
+__pycache__/
+*.egg-info/
+build/
+.venv/
+dist/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+*.whl
+*.tar.gz
+.coverage
+htmlcov/
+config.json
+.env
+.env.*
+!.env.example
