@@ -100,6 +100,10 @@ No claim is made that forks, rebuilt wheels, altered languages, different hardwa
 - [Safety contract](docs/SAFETY_CONTRACT.md)
 - [Release provenance](docs/RELEASE_PROVENANCE.md)
 
+## Credits
+
+Built by [Tim Verhoogt](https://github.com/Timverhoogt) with development and testing assistance from [Hermes Agent](https://github.com/NousResearch/hermes-agent) by [Nous Research](https://nousresearch.com/).
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
