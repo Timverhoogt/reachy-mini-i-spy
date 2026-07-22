@@ -46,7 +46,7 @@ def _validate(config: AppConfig) -> AppConfig:
     if parsed.username or parsed.password or parsed.query or parsed.fragment:
         raise ValueError("Broker URL must not contain credentials, query parameters, or fragments")
     if parsed.hostname in {"api.openai.com", "api.anthropic.com"} or not parsed.path.rstrip("/").endswith("/ispy/v1"):
-        raise ValueError("Use the narrow Hermes I Spy broker endpoint ending in /ispy/v1")
+        raise ValueError("Use the narrow I Spy provider broker endpoint ending in /ispy/v1")
     if not config.device_id or len(config.device_id) > 64 or not config.device_id.replace("-", "").isalnum():
         raise ValueError("Invalid device_id")
     if len(config.broker_token) > 512 or any(ch in config.broker_token for ch in "\r\n"):

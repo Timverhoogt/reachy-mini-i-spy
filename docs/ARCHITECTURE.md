@@ -15,9 +15,9 @@ The `reachy_mini_i_spy` package runs through the official `reachy_mini_apps` ent
 
 It does not receive provider credentials and cannot select models, prompts, upstream URLs, or general tools.
 
-## Hermes-host broker
+## Standalone provider broker
 
-`hermes_broker/` is deployed separately and is intentionally excluded from the Reachy wheel. It exposes only six operations under `/ispy/v1`:
+`hermes_broker/` is deployed on a separate trusted host and is intentionally excluded from the Reachy wheel. The directory keeps its historical name for compatibility, but the component does not require Hermes Agent or the Reachy Mini Hermes app. It exposes only six operations under `/ispy/v1`:
 
 1. input moderation;
 2. target selection or presence checking;
@@ -37,7 +37,7 @@ Caregiver consent
 Reachy: bounded motion + three transient JPEGs
       │ scoped TLS request
       ▼
-Hermes I Spy broker: moderation + fixed vision decision
+I Spy provider broker: moderation + fixed vision decision
       │ validated target only
       ▼
 Reachy: deterministic clue/guess state + local motion/audio
@@ -48,6 +48,8 @@ Reachy: deterministic clue/guess state + local motion/audio
 
 Frames and guesses are processed in memory. Neither component intentionally persists gameplay media or transcripts.
 
-## Related project
+## Origin and related project
 
-[Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes) has its own integrated Kids Mode implementation, child-session bridge, five-frame scan, and alternating roles. It shares target-selection principles with this project but not its runtime authority or speech/session protocol. See [SAFETY_CONTRACT.md](SAFETY_CONTRACT.md) before coordinating changes.
+Reachy Mini I Spy originated as a focused extraction of the I Spy experience developed in [Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes). It is now a complete standalone app with its own Reachy entry point, UI, dedicated broker, safety contract, releases, and acceptance lifecycle.
+
+Reachy Mini Hermes retains a separate integrated Kids Mode implementation, child-session bridge, five-frame scan, and alternating roles. The projects share some target-selection principles, but neither app shares the other’s runtime authority, speech/session protocol, release status, or physical acceptance. See [SAFETY_CONTRACT.md](SAFETY_CONTRACT.md) when a policy change could affect both.

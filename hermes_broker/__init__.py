@@ -1,1 +1,1 @@
-"""Hermes-host companion broker for Reachy Mini I Spy."""
+"""Dedicated off-robot provider broker for Reachy Mini I Spy."""

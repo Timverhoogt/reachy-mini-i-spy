@@ -1,4 +1,4 @@
-"""Narrow, authenticated Hermes-host broker for the I Spy app.
+"""Narrow, authenticated off-robot provider broker for the I Spy app.
 
 This component is intentionally outside the Reachy package. It owns provider
 credentials and translates five fixed game operations into fixed OpenAI calls.
@@ -394,7 +394,7 @@ def create_app(*, secrets: BrokerSecrets | None = None, backend: Backend | None 
     secrets = secrets or BrokerSecrets.load()
     backend = backend or OpenAIBackend(secrets.provider_key)
     state = BrokerState(secrets.clients, rate_limit=rate_limit)
-    app = FastAPI(title="Hermes I Spy Broker", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Reachy Mini I Spy Provider Broker", docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.middleware("http")
     async def request_policy(request: Request, call_next):  # type: ignore[no-untyped-def]
@@ -477,5 +477,5 @@ def create_app(*, secrets: BrokerSecrets | None = None, backend: Backend | None 
 
 
 def app_factory() -> FastAPI:
-    """Uvicorn factory that loads owner-only secrets on the Hermes host."""
+    """Uvicorn factory that loads owner-only secrets on the broker host."""
     return create_app()
