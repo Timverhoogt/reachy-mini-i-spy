@@ -1,4 +1,4 @@
-"""Client for the narrow Hermes-host I Spy provider broker."""
+"""Client for the standalone app's narrow off-robot provider broker."""
 
 from __future__ import annotations
 

@@ -2,7 +2,7 @@
 """Comprehensive readiness and security verification script for the I Spy Broker.
 
 This script performs direct live integration and security policy compliance tests
-against the running Hermes broker to confirm absolute correctness of:
+against the running I Spy provider broker to confirm absolute correctness of:
 1. Owner-only secret loading.
 2. Scoped device/session token binding and header validation.
 3. Six typed routes schema and schema-validation.

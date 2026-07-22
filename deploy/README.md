@@ -1,8 +1,8 @@
-# Hermes-host I Spy broker deployment
+# Standalone I Spy provider broker deployment
 
-The companion in `hermes_broker/` runs only on the Hermes host. It is not part of the `reachy_mini_i_spy` wheel. It offers exactly six POST routes under `/ispy/v1`: four provider decisions, TTS, and session cancellation. There is no provider passthrough, model selection, arbitrary prompt, agent, tool, memory, or OpenAI-compatible endpoint.
+The companion in `hermes_broker/` runs on a separate trusted Linux host. The directory and default service paths retain their historical names for compatibility, but the broker does not require Hermes Agent or the Reachy Mini Hermes app. It is not part of the `reachy_mini_i_spy` wheel. It offers exactly six POST routes under `/ispy/v1`: four provider decisions, TTS, and session cancellation. There is no provider passthrough, model selection, arbitrary prompt, agent, tool, memory, or OpenAI-compatible endpoint.
 
-## 1. Install on Hermes
+## 1. Install on a trusted broker host
 
 Create a dedicated checkout and virtual environment under `/opt/hermes-ispy-broker`, then install the broker extra:
 
@@ -20,7 +20,7 @@ Generate a separate random client token for each Reachy (`python -c 'import secr
 
 ```json
 {
-  "openai_api_key": "REPLACE_INTERACTIVELY_ON_HERMES",
+  "openai_api_key": "REPLACE_INTERACTIVELY_ON_BROKER_HOST",
   "clients": {
     "REPLACE_WITH_RANDOM_SCOPED_TOKEN": "reachy-one"
   }
@@ -33,7 +33,7 @@ Then run `chown root:root /etc/hermes-ispy-broker/secrets.json` and `chmod 600 /
 
 Review and install `deploy/hermes-ispy-broker.service`, then enable it with systemd. The unit binds only to `127.0.0.1:8065`, disables access logs and proxy-header trust, passes secrets through systemd credentials, and keeps credentials out of process arguments.
 
-Terminate TLS at the existing authenticated Hermes reverse proxy and map only `/ispy/v1/*` to this loopback service. Do not proxy `/`, arbitrary upstream paths, WebSockets, redirects, or an OpenAI-compatible prefix. Apply an outer request-body cap of 5 MB and a timeout no greater than 20 seconds. The application independently enforces strict JSON, bounded frames/text/output, fixed models/prompts, no redirects, per-device/session sequencing, cancellation/late-result rejection, and per-device rate limits.
+Terminate TLS at an authenticated reverse proxy on the broker host and map only `/ispy/v1/*` to this loopback service. A host already running Hermes Agent may reuse its trusted proxy, but that is optional. Do not proxy `/`, arbitrary upstream paths, WebSockets, redirects, or an OpenAI-compatible prefix. Apply an outer request-body cap of 5 MB and a timeout no greater than 20 seconds. The application independently enforces strict JSON, bounded frames/text/output, fixed models/prompts, no redirects, per-device/session sequencing, cancellation/late-result rejection, and per-device rate limits.
 
 Configure Reachy with only:
 

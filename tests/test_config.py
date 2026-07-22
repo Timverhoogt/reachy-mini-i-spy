@@ -41,7 +41,7 @@ def test_local_http_provider_is_allowed() -> None:
 
 
 def test_direct_provider_endpoint_is_rejected() -> None:
-    with pytest.raises(ValueError, match="Hermes I Spy broker"):
+    with pytest.raises(ValueError, match="I Spy provider broker"):
         merge_config(AppConfig(broker_token="x"), {"provider_url": "https://api.openai.com/v1"})
 
 

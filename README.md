@@ -4,13 +4,14 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Reachy Mini](https://img.shields.io/badge/Reachy_Mini-app-5b6ee1)](https://github.com/pollen-robotics/reachy_mini)
 
-A standalone English/Dutch “I Spy” game for Reachy Mini. A caregiver explicitly opts in to camera use for every session; Reachy performs a gentle 5.5-second search and chooses one stable, age-appropriate household object.
+A complete standalone English/Dutch “I Spy” app for Reachy Mini. A caregiver explicitly opts in to camera use for every session; Reachy performs a gentle 5.5-second search and chooses one stable, age-appropriate household object.
 
-This repository is the canonical source for the **standalone game**. It does not require the full Hermes Agent application on Reachy. Provider credentials remain on a separate Hermes host behind a narrow, app-specific broker.
+Reachy Mini I Spy originated from the I Spy experience developed in [Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes). It is now its own full application and project, with an independent Reachy app entry point, UI, dedicated provider broker, safety contract, release artifacts, issue tracker, and development lifecycle. It does not require the full Reachy Mini Hermes app on the robot. Provider credentials remain off-robot behind the standalone app’s narrow broker.
 
 ## What it does
 
 - English and Dutch gameplay for age bands 4–6, 7–9, and 10–12.
+- A documented end-to-end path for adding any other language.
 - Per-session caregiver camera consent.
 - Three transient in-memory viewpoints during one bounded search.
 - Stable-object, colour, confidence, size, and category validation.
@@ -24,7 +25,7 @@ This repository is the canonical source for the **standalone game**. It does not
 
 The accepted `0.1.0` app is available as `reachy_mini_i_spy`, sourced from the public [Reachy Mini app-catalog Space](https://huggingface.co/spaces/Timbo89/reachy_mini_i_spy). Open **Apps** on Reachy Mini and search for **I Spy** or `reachy_mini_i_spy`.
 
-Provider setup on a Hermes host is still required. Follow [the broker deployment guide](deploy/README.md) before starting a game.
+The included I Spy provider broker must run on a separate trusted host. That may be the same machine that runs Hermes Agent, but neither Hermes Agent nor the Reachy Mini Hermes app is required. Follow [the broker deployment guide](deploy/README.md) before starting a game.
 
 ### Verified release artifact
 
@@ -47,13 +48,13 @@ Read [release provenance](docs/RELEASE_PROVENANCE.md) before rebuilding or repla
 - Missing moderation, vision, malformed output, stale sessions, and network failures fail closed.
 - The app has no personal memory, face recognition, general agent tools, files, messaging, smart-home, or purchasing access.
 
-Reachy stores only a broker URL, broker-bound device ID, and scoped client token in an owner-only local configuration file. Provider credentials stay on the Hermes host. Reachy cannot select provider models, URLs, prompts, or tools.
+Reachy stores only a broker URL, broker-bound device ID, and scoped client token in an owner-only local configuration file. Provider credentials stay on the separate broker host. Reachy cannot select provider models, URLs, prompts, or tools.
 
 The complete normative boundary is documented in [Safety contract](docs/SAFETY_CONTRACT.md). Security reports should follow [SECURITY.md](SECURITY.md).
 
-## Relationship to Reachy Mini Hermes
+## Origins and related project
 
-[Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes) includes a separate, integrated Kids Mode I Spy experience. The projects intentionally have different runtime and trust boundaries:
+Reachy Mini I Spy began as a focused extraction of the I Spy experience from [Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes). The standalone app is maintained, versioned, distributed, and physically accepted independently. Reachy Mini Hermes continues to include its own integrated Kids Mode implementation.
 
 | Capability | Standalone I Spy | Reachy Mini Hermes |
 |---|---:|---:|
@@ -65,7 +66,7 @@ The complete normative boundary is documented in [Safety contract](docs/SAFETY_C
 | Alternating child/robot chooser roles | No | Yes |
 | General agent or private tools during Kids Mode | No | No |
 
-Both implementations enforce compatible target-selection invariants, but cancellation, moderation, camera lifecycle, and speech authorization remain application-specific. Coordinated changes must update this repository’s [safety contract](docs/SAFETY_CONTRACT.md) and the Hermes project’s corresponding tests and documentation.
+The standalone app has its own runtime and trust boundary. Some target-selection principles remain aligned with their Hermes origin, but cancellation, moderation, camera lifecycle, speech authorization, release provenance, and acceptance are application-specific. A shared safety-policy change should be reviewed in both projects without making either project’s release dependent on the other.
 
 ## Development
 
@@ -80,7 +81,7 @@ reachy-mini-app-assistant check .
 
 The Reachy SDK includes native Linux dependencies. See the CI workflow for the tested Ubuntu setup.
 
-To add a language, follow [Adding a language](docs/ADDING_A_LANGUAGE.md). A modified language build requires its own moderation review and physical acceptance; acceptance of the original wheel does not transfer automatically to a fork.
+To add **any other language**, follow [Adding any language](docs/ADDING_A_LANGUAGE.md). The guide covers locale selection, app/API phrases, clues, provider schemas, moderation vocabulary, browser speech recognition, TTS, tests, packaging, and supervised acceptance. A modified language build requires its own moderation review and physical acceptance; acceptance of the original wheel does not transfer automatically.
 
 ## Verified release
 
@@ -92,7 +93,8 @@ No claim is made that forks, rebuilt wheels, altered languages, different hardwa
 
 - [Reachy Mini SDK](https://github.com/pollen-robotics/reachy_mini)
 - [Reachy Mini I Spy app-catalog Space](https://huggingface.co/spaces/Timbo89/reachy_mini_i_spy)
-- [Reachy Mini Hermes integration](https://github.com/Timverhoogt/reachy-mini-hermes)
+- [Reachy Mini Hermes — project origin and related integrated app](https://github.com/Timverhoogt/reachy-mini-hermes)
+- [Add any language](docs/ADDING_A_LANGUAGE.md)
 - [Hermes Agent documentation](https://hermes-agent.nousresearch.com/docs/)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Safety contract](docs/SAFETY_CONTRACT.md)

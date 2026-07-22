@@ -49,14 +49,16 @@ The executable source of these invariants is `reachy_mini_i_spy/game.py::validat
 
 The standalone app and broker have no personal memory, face recognition, general agent tools, private files, messaging, smart-home control, purchasing, or unrestricted provider API. Scoped client credentials authorize only the fixed I Spy broker and are bound to one device ID.
 
-## Coordination with Reachy Mini Hermes
+## Origin and coordination with Reachy Mini Hermes
 
-[Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes) enforces compatible target-selection principles in `reachy_mini_hermes/ispy.py`, but it has different frame counts, session ownership, camera choreography, moderation capabilities, and speech authorization.
+This standalone project originated from I Spy work in [Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes), but it now owns its runtime, safety contract, releases, and acceptance independently. Reachy Mini Hermes retains a separate integrated implementation with different frame counts, session ownership, camera choreography, moderation capabilities, and speech authorization.
 
-A target-policy change must therefore:
+When a shared target-policy principle changes:
 
-1. update this contract and standalone tests;
-2. review the Hermes implementation for equivalent policy impact;
-3. update Hermes tests/documentation where applicable;
-4. rerun both projects' full gates;
-5. repeat supervised physical acceptance if motion, camera timing, language, audio, or hardware behavior changes.
+1. update this standalone contract and tests;
+2. review the related Hermes implementation for equivalent policy impact;
+3. update Hermes tests/documentation when applicable;
+4. rerun each affected project’s own full gates;
+5. repeat supervised physical acceptance for each affected app if motion, camera timing, language, audio, or hardware behavior changes.
+
+A release in either project does not automatically validate or accept a release in the other.

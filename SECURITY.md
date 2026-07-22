@@ -12,7 +12,7 @@ Include the affected commit or artifact digest, deployment topology, reproductio
 
 ## Deployment expectations
 
-- Keep provider credentials on the Hermes host.
+- Keep provider credentials on the separate trusted broker host, never on Reachy.
 - Use one scoped broker token per Reachy, bound to its device ID.
 - Keep Reachy configuration and broker secrets owner-only.
 - Bind the broker to loopback and expose only `/ispy/v1/*` through an authenticated TLS proxy.

@@ -31,7 +31,7 @@ Homepage = "https://github.com/Timverhoogt/reachy-mini-i-spy"
 Repository = "https://github.com/Timverhoogt/reachy-mini-i-spy"
 Issues = "https://github.com/Timverhoogt/reachy-mini-i-spy/issues"
 "Reachy app catalog source" = "https://huggingface.co/spaces/Timbo89/reachy_mini_i_spy"
-"Hermes integration" = "https://github.com/Timverhoogt/reachy-mini-hermes"
+"Project origin: Reachy Mini Hermes" = "https://github.com/Timverhoogt/reachy-mini-hermes"
 
 [project.optional-dependencies]
 dev = ["build>=1.2", "pytest>=8.0", "ruff>=0.9"]

@@ -52,14 +52,14 @@
     </section>
 
     <details class="card">
-      <summary>Caregiver Hermes broker settings</summary>
-      <p class="muted">Only a scoped I Spy broker token is stored on Reachy. Provider credentials stay on Hermes.</p>
+      <summary>Caregiver I Spy broker settings</summary>
+      <p class="muted">Only a scoped I Spy broker token is stored on Reachy. Provider credentials stay on the separate broker host.</p>
       <form id="settings-form" autocomplete="off">
         <label>Caregiver access token<input id="caregiver-token" type="password" autocomplete="off" placeholder="Required for Start, guesses, and settings"></label>
-        <label>Hermes broker URL<input id="provider-url" type="url" required></label>
+        <label>I Spy broker URL<input id="provider-url" type="url" required></label>
         <label>Scoped broker token<input id="broker-token" type="password" autocomplete="new-password" placeholder="Leave blank to keep current token"></label>
         <label>Broker-bound device ID<input id="device-id" maxlength="64" required></label>
-        <p class="muted">Models, prompts, limits, moderation, and provider credentials are fixed on Hermes and cannot be changed here.</p>
+        <p class="muted">Models, prompts, limits, moderation, and provider credentials are fixed on the broker host and cannot be changed here.</p>
         <button class="secondary" type="submit">Save private settings</button>
         <span id="config-state" class="muted"></span>
       </form>
