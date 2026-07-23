@@ -33,7 +33,7 @@
 
       <label class="consent">
         <input id="camera-consent" type="checkbox">
-        <span><strong>Caregiver camera opt-in</strong><small>Use up to 3 temporary frames to choose an object. Frames are not saved.</small></span>
+        <span><strong>Allow camera for this game</strong><small>Use up to 3 temporary frames to choose an object. Frames are not saved.</small></span>
       </label>
 
       <div class="actions">
@@ -56,7 +56,6 @@
       <p id="compute-profile" class="muted">Detecting whether compute runs on Reachy Wireless or the connected Lite host…</p>
       <p class="muted">No Hermes installation, provider broker, or second server is required. The API key is stored owner-only on the machine running the Reachy daemon and is never returned by the status API.</p>
       <form id="settings-form" autocomplete="off">
-        <label>Caregiver access token<input id="caregiver-token" type="password" autocomplete="off" placeholder="Required for Start, guesses, and settings"></label>
         <label>Vision mode
           <select id="provider">
             <option value="openai">OpenAI — one API key, robot-speaker audio</option>

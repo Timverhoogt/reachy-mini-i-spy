@@ -33,6 +33,7 @@ def test_language_guide_covers_any_language_end_to_end() -> None:
 def test_reachy_settings_present_standalone_provider_and_compute_profiles() -> None:
     page = (ROOT / "reachy_mini_i_spy" / "static" / "index.html").read_text()
     script = (ROOT / "reachy_mini_i_spy" / "static" / "main.js").read_text()
+    api = (ROOT / "reachy_mini_i_spy" / "main.py").read_text()
     assert "Standalone vision settings" in page
     assert "OpenAI API key" in page
     assert "provider broker" in page
@@ -40,3 +41,6 @@ def test_reachy_settings_present_standalone_provider_and_compute_profiles() -> N
     assert "onboard CM4" in script
     assert "broker URL" not in page
     assert "Scoped broker token" not in page
+    combined = page + script + api
+    for obsolete in ("caregiver", "csrf", "X-I-Spy-CSRF", "CaregiverGuard", "authorizedRequest"):
+        assert obsolete.casefold() not in combined.casefold()

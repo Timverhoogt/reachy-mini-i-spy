@@ -12,7 +12,7 @@ Include the affected commit or artifact digest, deployment profile (Lite host or
 
 ## Deployment expectations
 
-- Enter provider credentials only through the local caregiver UI on the machine running the Reachy daemon.
+- Enter provider credentials only through the local app UI on the machine running the Reachy daemon.
 - Local mode needs no provider credential; install voices only through the built-in pinned/checksummed setup action.
 - Keep `~/.config/reachy-mini-i-spy/config.json` owner-only (`0600`) and its parent directory `0700`.
 - Do not put credentials in source, wheel files, service arguments, logs, screenshots or support reports.

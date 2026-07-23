@@ -140,7 +140,7 @@ class GameMachine:
         if language not in {"en", "nl"} or age_band not in {"4-6", "7-9", "10-12"}:
             raise ValueError("Unsupported game settings")
         if not camera_consent:
-            raise PermissionError("Caregiver camera opt-in is required for each game session")
+            raise PermissionError("Camera opt-in is required for each game session")
         with self._lock:
             self.generation += 1
             self.language, self.age_band = language, age_band
@@ -214,7 +214,7 @@ class GameMachine:
             return self.generation
 
     def fail_if_current(self, generation: int, message: str) -> int | None:
-        """Fail only the active generation so a concurrent caregiver Stop always wins."""
+        """Fail only the active generation so a concurrent user Stop always wins."""
         with self._lock:
             if not self._is_current_unlocked(generation):
                 return None

@@ -5,7 +5,7 @@ This document is normative for the standalone Reachy Mini I Spy app. UI text and
 ## Consent and camera lifecycle
 
 - Every session starts with camera access disabled.
-- A caregiver must explicitly opt in for each start.
+- The user must explicitly opt in for each start.
 - Capture is limited to three transient JPEG viewpoints during a bounded search.
 - Stop, reveal, error, shutdown, or consent revocation invalidates the active generation and disables camera use.
 - Late provider, motion, speech, or selection results from an invalid generation are discarded.
@@ -43,7 +43,7 @@ The executable source of these invariants is `reachy_mini_i_spy/game.py::validat
 - Cloud guesses and generated output are moderated through fixed in-process provider operations.
 - Local mode accepts only an explicit COCO target allowlist, reviewed bilingual hints/aliases and bounded text that passes the deterministic deny policy.
 - Spoken output is checked immediately before synthesis.
-- The caregiver UI cannot choose provider URLs, models, system prompts, tools, or voices.
+- The app UI cannot choose provider URLs, models, system prompts, tools, or voices.
 - Missing cloud moderation, missing local model assets or failed synthesis authorization fails closed.
 
 ## Privacy and authority boundaries

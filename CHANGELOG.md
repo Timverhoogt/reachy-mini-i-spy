@@ -11,7 +11,7 @@ All notable changes to this project are documented here.
 - Explicit relationship and coordinated-change references for Reachy Mini Hermes.
 - GitHub CI for source, policy, and artifact-boundary checks.
 - In-process fixed-policy OpenAI provider configured with one owner-only API key.
-- Automatic Lite-host versus Wireless-host compute guidance in the caregiver UI.
+- Automatic Lite-host versus Wireless-host compute guidance in the app UI.
 - No-key local ONNX object detection with an explicit child-safe class allowlist and deterministic bilingual gameplay policy.
 - Pinned, checksummed English/Dutch offline TTS setup using Apache-2.0 `sherpa-onnx`, public-domain LJSpeech and CC0 Nathalie voice data.
 - Safe atomic local-model installer with archive size, member and path-traversal enforcement.
@@ -28,7 +28,7 @@ All notable changes to this project are documented here.
 ### Added
 
 - Standalone English/Dutch I Spy game for Reachy Mini.
-- Per-session caregiver camera consent and three-frame bounded search.
+- Per-session camera opt-in and three-frame bounded search.
 - Dedicated narrow off-robot provider broker with fixed provider decisions and scoped device authentication.
 - Deterministic game state, generation-based cancellation, moderated clues/guesses/speech, authoritative Stop, folding, and motor disable.
 - Physically accepted wheel with SHA-256 `56e821d241f323144f6b9af2baacd7eb8929ed63de641944eacd32d0d911ca6e`.

@@ -13,7 +13,14 @@ SECRET_PATTERNS = (
     re.compile(rb"sk-[A-Za-z0-9_-]{20,}"),
     re.compile(rb'(?i)(openai_api_key|anthropic_api_key)\s*["\'=:\s]+[A-Za-z0-9_-]{16,}'),
 )
-FORBIDDEN_MEMBERS = ("hermes_broker/", "deploy/", ".env", "config.json", "secrets.json")
+FORBIDDEN_MEMBERS = (
+    "hermes_broker/",
+    "deploy/",
+    "reachy_mini_i_spy/auth.py",
+    ".env",
+    "config.json",
+    "secrets.json",
+)
 DETECTOR_SUFFIX = "reachy_mini_i_spy/models/ssdlite320_mobilenet_v3_large_coco.onnx"
 DETECTOR_SHA256 = "ee09b0d9f02d938780280eea55794275d592782bdcfd1c1b88aa8308cddc120f"
 REQUIRED_SUFFIXES = (

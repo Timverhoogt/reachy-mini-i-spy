@@ -1702,7 +1702,7 @@ def test_revocation_after_start_before_publication_does_not_reenter_audio_lock()
     stopper.start()
 
     assert speech_done.wait(1), "revoked speech deadlocked while recursively acquiring _audio_lock"
-    assert stop_done.wait(1), "caregiver Stop could not join the revoked playback cleanup"
+    assert stop_done.wait(1), "user Stop could not join the revoked playback cleanup"
     assert not playback_active.is_set()
 
 

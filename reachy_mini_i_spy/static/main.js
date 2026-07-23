@@ -2,7 +2,6 @@
 
 const $ = (id) => document.getElementById(id);
 let currentState = "not_started";
-let csrfToken = "";
 
 function toast(message) {
   $("toast").textContent = message;
@@ -15,30 +14,6 @@ async function request(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.detail || "Request failed safely");
   return data;
-}
-
-async function authorizedRequest(path, options = {}) {
-  const caregiverToken = $("caregiver-token").value;
-  if (!caregiverToken) throw new Error("Enter the caregiver access token first");
-  if (!csrfToken) {
-    const session = await request("/api/caregiver/session", {
-      method: "POST", headers: { "Authorization": `Bearer ${caregiverToken}` },
-    });
-    csrfToken = session.csrf_token;
-  }
-  const headers = {
-    ...(options.headers || {}),
-    "Authorization": `Bearer ${caregiverToken}`,
-    "X-I-Spy-CSRF": csrfToken,
-  };
-  try {
-    const data = await request(path, { ...options, headers });
-    csrfToken = data.csrf_token || "";
-    return data;
-  } catch (error) {
-    csrfToken = "";
-    throw error;
-  }
 }
 
 function render(game) {
@@ -76,7 +51,7 @@ async function refresh() {
 
 $("start").addEventListener("click", async () => {
   try {
-    const data = await authorizedRequest("/api/game/start", {
+    const data = await request("/api/game/start", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         language: $("language").value, age_band: $("age").value,
@@ -101,7 +76,7 @@ $("guess-form").addEventListener("submit", async (event) => {
   if (!text) return;
   $("guess").value = "";
   try {
-    await authorizedRequest("/api/game/guess", {
+    await request("/api/game/guess", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
     });
   } catch (error) { toast(error.message); }
@@ -112,7 +87,7 @@ $("settings-form").addEventListener("submit", async (event) => {
   const payload = { provider: $("provider").value };
   if ($("api-key").value) payload.api_key = $("api-key").value;
   try {
-    const data = await authorizedRequest("/api/settings", {
+    const data = await request("/api/settings", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
     });
     $("api-key").value = "";
@@ -125,7 +100,7 @@ $("settings-form").addEventListener("submit", async (event) => {
 $("local-setup").addEventListener("click", async () => {
   $("local-state").textContent = "Downloading and verifying local models…";
   try {
-    const data = await authorizedRequest("/api/local/setup", { method: "POST" });
+    const data = await request("/api/local/setup", { method: "POST" });
     $("local-state").textContent = data.assets.ready
       ? "Local models installed and verified"
       : "Local model setup incomplete";

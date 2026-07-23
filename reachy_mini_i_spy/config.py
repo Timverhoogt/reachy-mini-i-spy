@@ -26,8 +26,7 @@ class AppConfig:
             return bool(local_assets_status()["ready"])
         return self.provider == "openai" and bool(self.api_key)
 
-    def public_dict(self, *, privileged: bool = False) -> dict[str, object]:
-        del privileged  # The public shape never exposes provider secrets.
+    def public_dict(self) -> dict[str, object]:
         payload: dict[str, object] = {
             "provider": self.provider,
             "api_key_configured": bool(self.api_key),

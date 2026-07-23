@@ -776,7 +776,7 @@ class GameRuntime:
             raise RuntimeError("Please wait for the current guess") from exc
         return self.snapshot()
 
-    def stop(self, reason: str = "caregiver") -> dict[str, object]:
+    def stop(self, reason: str = "user") -> dict[str, object]:
         # Invocation gate: operations already queued for publication lose
         # before Stop waits to acquire the linearization lock.
         self._revocation_requested.set()

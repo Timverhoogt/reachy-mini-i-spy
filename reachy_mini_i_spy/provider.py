@@ -1,7 +1,7 @@
 """In-process fixed-policy providers for standalone I Spy.
 
 No broker, model URL, prompt, or tool surface is exposed to the app UI. The
-caregiver selects a supported provider mode and, for cloud mode, supplies one
+user selects a supported provider mode and, for cloud mode, supplies one
 owner-only API key on the machine running the Reachy daemon.
 """
 # Fixed prompts stay visually contiguous for policy review.

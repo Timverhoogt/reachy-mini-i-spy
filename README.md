@@ -25,7 +25,7 @@ Reachy Mini I Spy originated from the I Spy experience developed in [Reachy Mini
 
 Version `0.1.0` was removed from the Reachy Mini app catalog because it still required a separately deployed provider broker. Its source and accepted artifact remain available for provenance, but it should not be presented as a one-click standalone setup.
 
-The in-development release moves all provider work into the app process. A caregiver chooses either direct OpenAI with one API key or local no-key ONNX processing. There is no broker URL, scoped broker token, separate Linux server or Hermes setup.
+The in-development release moves all provider work into the app process. The user chooses either direct OpenAI with one API key or local no-key ONNX processing. There is no broker URL, scoped broker token, separate Linux server or Hermes setup.
 
 The app will be relisted only after the new Lite and Wireless deployment paths are tested and physically accepted.
 
@@ -36,13 +36,13 @@ The app will be relisted only after the new Lite and Wireless deployment paths a
 | **Reachy Mini Lite** | The Mac/PC running Reachy Mini Control and the daemon | Runs on that connected Mac/PC |
 | **Reachy Mini Wireless** | Reachy's Raspberry Pi CM4 | Runs onboard; cloud mode calls OpenAI directly and local mode stays onboard |
 
-This is one application and one wheel. The UI detects the deployment profile and tells the caregiver where compute runs.
+This is one application and one wheel. The UI detects the deployment profile and shows where compute runs.
 
 ## Provider modes
 
 ### Direct cloud key — implemented
 
-- One OpenAI API key entered in the caregiver UI.
+- One OpenAI API key entered in the local app UI.
 - Fixed OpenAI URL, vision model, moderation model, TTS model, prompts and response schemas; callers cannot override them.
 - Vision frames, moderated guesses and speech requests go directly from the app to OpenAI.
 - The key is stored with mode `0600` in `~/.config/reachy-mini-i-spy/config.json` and is never returned by the status API or written to logs.
@@ -52,7 +52,7 @@ This is one application and one wheel. The UI detects the deployment profile and
 
 - A bundled 14 MB ONNX export of TorchVision SSDLite-MobileNet performs object detection on the daemon host.
 - Only an explicit child-safe COCO class allowlist can become a target. Stability, ambiguity, size, colour, location, hints and guesses are handled deterministically.
-- The caregiver clicks **Install / verify local models** once. The app downloads about 35 MB of pinned English/Dutch voice archives, verifies exact SHA-256 digests and safely extracts them into `~/.cache/reachy-mini-i-spy/models`.
+- The user clicks **Install / verify local models** once. The app downloads about 35 MB of pinned English/Dutch voice archives, verifies exact SHA-256 digests and safely extracts them into `~/.cache/reachy-mini-i-spy/models`.
 - Offline speech uses Apache-2.0 `sherpa-onnx`, not the GPL Piper runtime. The English LJSpeech dataset is public domain; the Dutch Nathalie dataset is CC0.
 - After setup, frames, guesses and speech stay on the Lite Mac/PC or Wireless CM4. No API key or HF token is needed.
 
@@ -61,7 +61,7 @@ On the actual aarch64 Wireless hardware, three repeated validation frames comple
 ## What it does
 
 - English and Dutch gameplay for age bands 4–6, 7–9 and 10–12.
-- Per-session caregiver camera consent.
+- Per-game camera opt-in.
 - Three transient in-memory viewpoints during one bounded search.
 - Stable-object, colour, confidence, size and category validation.
 - Moderated guesses, hints, reveal text and speech.

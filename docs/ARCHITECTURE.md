@@ -16,7 +16,7 @@ The daemon and I Spy app run on Reachy's onboard Raspberry Pi CM4. Cloud provide
 
 The `reachy_mini_i_spy` package is installed through the official `reachy_mini_apps` entry point. It owns:
 
-- caregiver settings and camera-consent state;
+- game settings and camera-opt-in state;
 - owner-only provider credentials;
 - fixed provider URL, models, prompts and response schemas;
 - deterministic game and generation state;
@@ -30,7 +30,7 @@ The UI cannot configure arbitrary URLs, models, prompts, voices or tools. Provid
 ## Direct cloud data flow
 
 ```text
-Caregiver consent
+Camera opt-in
       │
       ▼
 App host: bounded motion + up to three transient JPEGs
@@ -50,7 +50,7 @@ Frames and guesses are processed in memory. The app does not intentionally persi
 ## Local-mode data flow
 
 ```text
-Caregiver consent
+Camera opt-in
       │
       ▼
 App host: bounded motion + up to three transient JPEGs
