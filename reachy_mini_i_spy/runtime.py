@@ -1162,11 +1162,19 @@ class GameRuntime:
                         self.motion.fold_and_disable()
                         self._ack_cleanup(self._epoch)
                 except Exception as exc:
-                    diagnostic_code = (
-                        exc.diagnostic_code
-                        if isinstance(exc, PrivacySafeRuntimeError)
-                        else "unclassified_runtime_failure"
-                    )
+                    if isinstance(exc, PrivacySafeRuntimeError):
+                        diagnostic_code = exc.diagnostic_code
+                    elif isinstance(exc, ProviderError) and load_config().provider == "local":
+                        diagnostic_code = {
+                            "No stable child-safe local target was found": "local_no_target",
+                            "Object colour was unclear": "local_unclear_colour",
+                            "Object colour could not be measured": "local_colour_unavailable",
+                            "Camera frame bounds were not met": "local_frame_bounds",
+                            "Camera frame was not a valid image": "local_invalid_frame",
+                            "Local provider session was cancelled": "local_cancelled",
+                        }.get(str(exc), "local_provider_failure")
+                    else:
+                        diagnostic_code = "unclassified_runtime_failure"
                     _LOGGER.warning(
                         "Game boundary failed closed: %s diagnostic=%s",
                         type(exc).__name__,
