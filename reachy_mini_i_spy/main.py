@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
+import urllib.request
 from typing import Literal
 
 from fastapi import HTTPException
@@ -15,6 +17,18 @@ from .local_assets import install_local_assets
 from .runtime import GameRuntime
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _running_on_wireless(requested: bool) -> bool:
+    """Recover the daemon's SKU flag when its app launcher omits constructor arguments."""
+    if requested:
+        return True
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8000/api/daemon/status", timeout=1.0) as response:
+            payload = json.load(response)
+        return isinstance(payload, dict) and payload.get("wireless_version") is True
+    except (OSError, ValueError):
+        return False
 
 
 class SettingsUpdate(BaseModel):
@@ -40,7 +54,7 @@ class ReachyMiniISpy(ReachyMiniApp):
 
     def __init__(self, running_on_wireless: bool = False) -> None:
         super().__init__(running_on_wireless=running_on_wireless)
-        self._deployment_profile = "wireless" if running_on_wireless else "lite_host"
+        self._deployment_profile = "wireless" if _running_on_wireless(running_on_wireless) else "lite_host"
         self._runtime: GameRuntime | None = None
         self._register_routes()
 
