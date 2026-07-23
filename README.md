@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: purple
 sdk: static
 pinned: false
-short_description: A private bilingual I Spy game for Reachy Mini Lite and Wireless
+short_description: Private bilingual I Spy for Reachy Mini Lite and Wireless
 tags:
   - reachy_mini
   - reachy_mini_python_app
@@ -21,13 +21,13 @@ A camera-opt-in English/Dutch I Spy game for Reachy Mini Lite and Reachy Mini Wi
 
 Reachy Mini I Spy originated from the I Spy experience developed in [Reachy Mini Hermes](https://github.com/Timverhoogt/reachy-mini-hermes). This repository is now an independent app with its own Reachy entry point, UI, safety contract, releases and acceptance lifecycle. **Hermes Agent and Reachy Mini Hermes are not runtime dependencies.**
 
-## Temporarily delisted
+## Current release
 
-Version `0.1.0` was removed from the Reachy Mini app catalog because it still required a separately deployed provider broker. Its source and accepted artifact remain available for provenance, but it should not be presented as a one-click standalone setup.
+Version `0.2.0` is a standalone, one-wheel release. Provider work runs inside the app process: choose direct OpenAI with one API key or local no-key ONNX processing. There is no broker URL, scoped broker token, separate Linux server or Hermes setup.
 
-The in-development release moves all provider work into the app process. The user chooses either direct OpenAI with one API key or local no-key ONNX processing. There is no broker URL, scoped broker token, separate Linux server or Hermes setup.
+The exact `0.2.0` release wheel has completed supervised physical acceptance on Reachy Mini Wireless, including camera consent, bounded search, local target selection, offline clue speech, a typed guess, reveal, camera shutdown, Stop, verified fold and disabled motors.
 
-The app will be relisted only after the new Lite and Wireless deployment paths are tested and physically accepted.
+The Lite-host profile is implemented and covered by the same automated policy/runtime suite, but this redesigned version has not yet completed same-version physical acceptance on Lite. The historical `0.1.0` Lite acceptance does not transfer to `0.2.0`.
 
 ## Where compute runs
 
@@ -56,7 +56,7 @@ This is one application and one wheel. The UI detects the deployment profile and
 - Offline speech uses Apache-2.0 `sherpa-onnx`, not the GPL Piper runtime. The English LJSpeech dataset is public domain; the Dutch Nathalie dataset is CC0.
 - After setup, frames, guesses and speech stay on the Lite Mac/PC or Wireless CM4. No API key or HF token is needed.
 
-On the actual aarch64 Wireless hardware, three repeated validation frames completed local target selection in about 4.36 seconds. Cold English/Dutch speech includes a 10–12 second model load; engines are cached afterward. Cloud mode remains the faster option, while local mode is the private/offline option. Hugging Face hosted inference is not used as a fallback: free users currently receive only $0.10/month in credits and still need an HF token.
+On actual aarch64 Wireless hardware, YOLOX-Nano inference takes about 0.24 seconds per settled frame. Cold English/Dutch speech includes a 10–12 second model load; engines are cached afterward. Cloud mode remains the faster option, while local mode is the private/offline option. Hugging Face hosted inference is not used as a fallback: free users currently receive only $0.10/month in credits and still need an HF token.
 
 ## What it does
 
@@ -95,7 +95,11 @@ The Reachy SDK includes native Linux dependencies. See CI for the tested Ubuntu 
 
 To add another language, follow [Adding any language](docs/ADDING_A_LANGUAGE.md). A modified language or provider build requires its own moderation review and physical acceptance; acceptance of an older artifact does not transfer.
 
-## Historical accepted release
+## Acceptance status
+
+The exact `0.2.0` Wireless-accepted wheel and its SHA-256 manifest are attached to the GitHub release and mirrored by the catalog Space. See [release provenance](docs/RELEASE_PROVENANCE.md).
+
+### Historical Lite release
 
 The delisted `0.1.0` wheel was physically accepted on a supervised Reachy Mini Lite:
 
@@ -104,7 +108,7 @@ reachy_mini_i_spy-0.1.0-py3-none-any.whl
 SHA-256 56e821d241f323144f6b9af2baacd7eb8929ed63de641944eacd32d0d911ca6e
 ```
 
-That acceptance covers only the historical broker-based artifact. It does **not** validate this provider redesign or the Wireless path.
+That acceptance covers only the historical broker-based artifact. It does **not** validate the `0.2.0` provider redesign on Lite.
 
 ## Credits
 

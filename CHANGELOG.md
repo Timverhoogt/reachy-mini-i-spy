@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.0] - 2026-07-23
 
 ### Added
 
@@ -13,6 +13,7 @@ All notable changes to this project are documented here.
 - In-process fixed-policy OpenAI provider configured with one owner-only API key.
 - Automatic Lite-host versus Wireless-host compute guidance in the app UI.
 - No-key local ONNX object detection with an explicit child-safe class allowlist and deterministic bilingual gameplay policy.
+- Pinned Apache-2.0 YOLOX-Nano detection with aspect-preserving preprocessing, class-aware NMS, multi-view stability and exact-box revalidation.
 - Pinned, checksummed English/Dutch offline TTS setup using Apache-2.0 `sherpa-onnx`, public-domain LJSpeech and CC0 Nathalie voice data.
 - Safe atomic local-model installer with archive size, member and path-traversal enforcement.
 
@@ -21,7 +22,7 @@ All notable changes to this project are documented here.
 - Positioning now records Reachy Mini Hermes as the project origin while presenting I Spy as a complete standalone app with its own lifecycle.
 - The language-extension guide now covers adding any language end to end, either upstream or in an independent fork.
 - Removed the provider broker, separate-host service, broker URL, scoped token, and Hermes-adjacent deployment path.
-- Temporarily delisted the historical `0.1.0` catalog entry pending clean Lite and Wireless acceptance.
+- Relisted the standalone app after exact-artifact Wireless acceptance; the redesigned Lite profile remains clearly marked as awaiting same-version physical acceptance.
 
 ## [0.1.0] - 2026-07-22
 
@@ -33,5 +34,6 @@ All notable changes to this project are documented here.
 - Deterministic game state, generation-based cancellation, moderated clues/guesses/speech, authoritative Stop, folding, and motor disable.
 - Physically accepted wheel with SHA-256 `56e821d241f323144f6b9af2baacd7eb8929ed63de641944eacd32d0d911ca6e`.
 
-[Unreleased]: https://github.com/Timverhoogt/reachy-mini-i-spy/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Timverhoogt/reachy-mini-i-spy/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Timverhoogt/reachy-mini-i-spy/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Timverhoogt/reachy-mini-i-spy/releases/tag/v0.1.0

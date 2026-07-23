@@ -1,6 +1,12 @@
 # Release provenance
 
-## Accepted artifact
+## Current accepted artifact (`0.2.0`)
+
+The exact `0.2.0` wheel attached to the GitHub release completed supervised physical acceptance on Reachy Mini Wireless (CM4). Its SHA-256 is published in the release's separate `SHA256SUMS.txt` asset so the artifact is built from the final committed source without embedding a self-referential digest in wheel metadata.
+
+Acceptance covered local YOLOX-Nano target selection, offline clue speech, typed guessing, reveal, camera shutdown, authoritative Stop, verified fold and disabled motors. The redesigned Lite-host profile is implemented but has not yet completed same-version physical acceptance; the historical `0.1.0` Lite result below does not transfer.
+
+## Historical accepted artifact (`0.1.0`)
 
 `reachy_mini_i_spy` version `0.1.0` was physically accepted using:
 

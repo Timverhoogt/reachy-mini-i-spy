@@ -26,7 +26,7 @@ DETECTOR_SHA256 = "c789161ed43c8269fcd4e67c67eeeb4e80c622da2eb296a20bc6007bd18a0
 REQUIRED_SUFFIXES = (
     DETECTOR_SUFFIX,
     "reachy_mini_i_spy/models/README.md",
-    "reachy_mini_i_spy/models/TORCHVISION_LICENSE.txt",
+    "reachy_mini_i_spy/models/YOLOX_LICENSE.txt",
 )
 
 
