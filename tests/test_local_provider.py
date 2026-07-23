@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+import subprocess
+import sys
 import threading
 import wave
 
@@ -16,6 +18,21 @@ def _provider() -> LocalProvider:
     provider = object.__new__(LocalProvider)
     provider._cancelled = threading.Event()
     return provider
+
+
+def test_detector_provider_import_does_not_eagerly_load_sherpa() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; import reachy_mini_i_spy.local_provider; "
+            "assert 'sherpa_onnx' not in sys.modules",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def _chair() -> Target:

@@ -9,12 +9,14 @@ import re
 import threading
 import wave
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 import onnxruntime as ort
-import sherpa_onnx
 from PIL import Image
+
+if TYPE_CHECKING:
+    import sherpa_onnx
 
 from .game import DISALLOWED_TERMS, AgeBand, Language, Target, validate_target
 from .local_assets import VOICE_ASSETS, detector_path, local_assets_status, voice_path
@@ -360,6 +362,10 @@ class LocalProvider:
 
     @classmethod
     def _tts_engine(cls, language: Language) -> sherpa_onnx.OfflineTts:
+        # Detector/game startup must not depend on platform-specific speech
+        # linkage. Load Sherpa only when offline TTS is actually requested.
+        import sherpa_onnx
+
         with cls._tts_lock:
             engine = cls._tts.get(language)
             if engine is not None:
