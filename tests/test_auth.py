@@ -49,13 +49,10 @@ def test_caregiver_csrf_is_one_time_and_replay_is_rejected() -> None:
     assert replay.value.status_code == 403
 
 
-def test_unauthenticated_config_never_discloses_broker_or_device_identity() -> None:
-    config = AppConfig(
-        provider_url="https://hermes.example/ispy/v1",
-        broker_token="secret",
-        device_id="private-reachy",
-    )
+def test_config_never_discloses_provider_key() -> None:
+    config = AppConfig(provider="openai", api_key="secret")
     public = config.public_dict()
-    assert "broker_url" not in public
-    assert "device_id" not in public
-    assert config.public_dict(privileged=True)["device_id"] == "private-reachy"
+    assert public["api_key_configured"] is True
+    assert "api_key" not in public
+    assert "secret" not in repr(public)
+    assert config.public_dict(privileged=True) == public

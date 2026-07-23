@@ -10,11 +10,18 @@ All notable changes to this project are documented here.
 - Apache-2.0 licensing, security policy, contribution guide, architecture, safety contract, and release provenance.
 - Explicit relationship and coordinated-change references for Reachy Mini Hermes.
 - GitHub CI for source, policy, and artifact-boundary checks.
+- In-process fixed-policy OpenAI provider configured with one owner-only API key.
+- Automatic Lite-host versus Wireless-host compute guidance in the caregiver UI.
+- No-key local ONNX object detection with an explicit child-safe class allowlist and deterministic bilingual gameplay policy.
+- Pinned, checksummed English/Dutch offline TTS setup using Apache-2.0 `sherpa-onnx`, public-domain LJSpeech and CC0 Nathalie voice data.
+- Safe atomic local-model installer with archive size, member and path-traversal enforcement.
 
 ### Changed
 
 - Positioning now records Reachy Mini Hermes as the project origin while presenting I Spy as a complete standalone app with its own lifecycle.
 - The language-extension guide now covers adding any language end to end, either upstream or in an independent fork.
+- Removed the provider broker, separate-host service, broker URL, scoped token, and Hermes-adjacent deployment path.
+- Temporarily delisted the historical `0.1.0` catalog entry pending clean Lite and Wireless acceptance.
 
 ## [0.1.0] - 2026-07-22
 

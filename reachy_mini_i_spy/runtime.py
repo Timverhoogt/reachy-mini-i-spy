@@ -883,8 +883,7 @@ class GameRuntime:
             self.motion.revoke_outputs()
             self._request_cleanup(cleanup_epoch)
             self._replace_pending(GameEvent("stop", generation, reason))
-        remotely_cancel = self._cancel_local_providers(revoked_providers)
-        self._schedule_remote_cancels(remotely_cancel)
+        self._cancel_local_providers(revoked_providers)
         with self._audio_lock:
             self._audio_epoch += 1
             self._audio_active_epoch = None
@@ -1088,17 +1087,10 @@ class GameRuntime:
         return providers
 
     @staticmethod
-    def _cancel_local_providers(providers: list[ProviderClient]) -> list[ProviderClient]:
-        """Revoke provider objects outside the ownership lock."""
-        return [provider for provider in providers if provider.cancel_local()]
-
-    def _schedule_remote_cancels(self, providers: list[ProviderClient]) -> None:
+    def _cancel_local_providers(providers: list[ProviderClient]) -> None:
+        """Revoke in-process provider objects outside the ownership lock."""
         for provider in providers:
-            threading.Thread(
-                target=provider.cancel_broker,
-                daemon=True,
-                name="ispy-broker-cancel",
-            ).start()
+            provider.cancel_local()
 
     def _cancel_providers(self) -> None:
         with self._ownership_lock:
@@ -1107,8 +1099,7 @@ class GameRuntime:
                 if lease.revoked is not None:
                     lease.revoked.set()
             revoked_providers = self._revoke_providers_locked()
-        remotely_cancel = self._cancel_local_providers(revoked_providers)
-        self._schedule_remote_cancels(remotely_cancel)
+        self._cancel_local_providers(revoked_providers)
 
     def _begin_shutdown(self) -> None:
         """Revoke active work as soon as the SDK requests process shutdown."""
@@ -1125,8 +1116,7 @@ class GameRuntime:
                 if lease.revoked is not None:
                     lease.revoked.set()
             revoked_providers = self._revoke_providers_locked()
-        remotely_cancel = self._cancel_local_providers(revoked_providers)
-        self._schedule_remote_cancels(remotely_cancel)
+        self._cancel_local_providers(revoked_providers)
 
     def _watch_for_shutdown(self) -> None:
         self.stop_event.wait()

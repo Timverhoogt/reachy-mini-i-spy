@@ -9,7 +9,7 @@ import pytest
 
 from reachy_mini_i_spy.config import AppConfig
 from reachy_mini_i_spy.game import validate_target
-from reachy_mini_i_spy.provider import ProviderClient, ProviderError
+from reachy_mini_i_spy.provider import MODERATION_MODEL, VISION_MODEL, ProviderClient, ProviderError
 
 
 class Response(io.BytesIO):
@@ -39,66 +39,78 @@ class Opener:
 
 def safe_candidate() -> dict[str, object]:
     return {
-        "object_name": "chair", "colour": "blue", "category": "furniture",
-        "location": "near the table", "frame_index": 0, "bbox": [0.2, 0.2, 0.3, 0.4],
-        "confidence": 0.92, "stable": True, "visible_frame_count": 1,
-        "hints_en": ["You can sit on it"], "hints_nl": ["Je kunt erop zitten"],
+        "object_name": "chair",
+        "colour": "blue",
+        "category": "furniture",
+        "location": "in the room",
+        "frame_index": 0,
+        "bbox": [0.2, 0.2, 0.3, 0.4],
+        "confidence": 0.92,
+        "stable": True,
+        "visible_frame_count": 1,
+        "hints_en": ["You can sit on it"],
+        "hints_nl": ["Je kunt erop zitten"],
     }
 
 
+def completion(content: dict[str, object]) -> dict[str, object]:
+    return {"choices": [{"message": {"content": json.dumps(content)}}]}
+
+
+def moderation(*, flagged: bool = False) -> dict[str, object]:
+    return {"results": [{"flagged": flagged}]}
+
+
 def client(opener: Opener) -> ProviderClient:
-    return ProviderClient(
-        AppConfig(provider_url="https://hermes.example/ispy/v1", broker_token="scoped-secret", device_id="reachy-one"),
-        opener=opener, session_id="a" * 32,
-    )
+    return ProviderClient(AppConfig(provider="openai", api_key="provider-secret"), opener=opener)
 
 
-def test_client_uses_only_bounded_route_and_never_puts_token_or_model_in_body() -> None:
-    opener = Opener([{"target": safe_candidate()}])
+def test_client_uses_fixed_openai_endpoint_model_and_authorization_header() -> None:
+    opener = Opener([completion(safe_candidate()), moderation()])
     target = client(opener).select_target([b"jpeg"], language="en", age_band="7-9")
     assert target.object_name == "chair"
     request, timeout = opener.requests[0]
-    assert request.full_url == "https://hermes.example/ispy/v1/select-target"
+    payload = json.loads(request.data)
+    assert request.full_url == "https://api.openai.com/v1/chat/completions"
+    assert request.headers["Authorization"] == "Bearer provider-secret"
     assert timeout <= 20
-    assert b"scoped-secret" not in request.data
-    assert b"model" not in request.data
-    assert request.headers["Authorization"] == "Bearer scoped-secret"
-    assert request.headers["X-i-spy-device"] == "reachy-one"
-    assert request.headers["X-i-spy-session"] == "a" * 32
+    assert payload["model"] == VISION_MODEL
+    assert payload["response_format"]["type"] == "json_schema"
+    assert b"provider-secret" not in request.data
 
 
-def test_modified_client_cannot_send_unknown_operation_through_public_methods() -> None:
-    opener = Opener([{"allowed": True}])
+def test_moderation_uses_fixed_endpoint_and_model() -> None:
+    opener = Opener([moderation()])
     client(opener).moderate("safe text")
-    payload = json.loads(opener.requests[0][0].data)
-    assert payload == {"text": "safe text"}
-    assert opener.requests[0][0].full_url.endswith("/moderate")
+    request = opener.requests[0][0]
+    payload = json.loads(request.data)
+    assert request.full_url == "https://api.openai.com/v1/moderations"
+    assert payload == {"model": MODERATION_MODEL, "input": "safe text"}
 
 
-def test_guess_is_sent_to_single_bounded_judge_operation() -> None:
-    opener = Opener([{"match": False}])
+def test_guess_is_moderated_then_sent_to_fixed_judge() -> None:
+    opener = Opener([moderation(), completion({"match": False})])
     target = validate_target(safe_candidate(), frame_count=1)
     assert client(opener).judge_guess("table", target, language="en") is False
-    assert len(opener.requests) == 1
-    assert opener.requests[0][0].full_url.endswith("/judge-guess")
+    assert [item[0].full_url.rsplit("/", 1)[-1] for item in opener.requests] == ["moderations", "completions"]
 
 
-def test_cancelled_client_rejects_late_or_new_results() -> None:
-    opener = Opener([{"cancelled": True}])
+def test_cancelled_client_rejects_new_and_late_results_without_remote_cancel() -> None:
+    opener = Opener([])
     provider = client(opener)
     provider.cancel()
     with pytest.raises(ProviderError, match="cancelled"):
         provider.moderate("safe")
-    assert opener.requests[0][0].full_url.endswith("/cancel")
+    assert opener.requests == []
 
 
 def test_wrong_content_type_fails_closed() -> None:
     class WrongType(Opener):
         def __call__(self, request: Any, timeout: float) -> Response:
             self.requests.append((request, timeout))
-            return Response(b'{"allowed":true}', "text/plain")
+            return Response(b'{"results":[{"flagged":false}]}', "text/plain")
 
-    with pytest.raises(ProviderError, match="invalid response"):
+    with pytest.raises(ProviderError, match="invalid bounded response"):
         client(WrongType([])).moderate("safe")
 
 
@@ -107,3 +119,8 @@ def test_oversize_frames_are_rejected_before_network() -> None:
     with pytest.raises(ProviderError):
         client(opener).select_target([b"x" * 1_500_001], language="en", age_band="7-9")
     assert opener.requests == []
+
+
+def test_local_mode_fails_closed_until_assets_are_installed() -> None:
+    with pytest.raises(ProviderError, match="Local provider assets"):
+        ProviderClient(AppConfig(provider="local"))

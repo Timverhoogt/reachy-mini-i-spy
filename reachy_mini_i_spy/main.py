@@ -12,15 +12,15 @@ from reachy_mini import ReachyMini, ReachyMiniApp
 
 from .auth import CaregiverGuard
 from .config import load_config, merge_config, save_config
+from .local_assets import install_local_assets
 from .runtime import GameRuntime
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class SettingsUpdate(BaseModel):
-    provider_url: str | None = Field(default=None, max_length=300)
-    broker_token: str | None = Field(default=None, max_length=512)
-    device_id: str | None = Field(default=None, min_length=1, max_length=64)
+    provider: Literal["openai", "local"] | None = None
+    api_key: str | None = Field(default=None, max_length=512)
 
 
 class StartRequest(BaseModel):
@@ -41,6 +41,7 @@ class ReachyMiniISpy(ReachyMiniApp):
 
     def __init__(self, running_on_wireless: bool = False) -> None:
         super().__init__(running_on_wireless=running_on_wireless)
+        self._deployment_profile = "wireless" if running_on_wireless else "lite_host"
         self._runtime: GameRuntime | None = None
         self._caregiver = CaregiverGuard()
         self._register_routes()
@@ -72,7 +73,14 @@ class ReachyMiniISpy(ReachyMiniApp):
                     "target": None,
                 }
             )
-            return {"app": "reachy_mini_i_spy", "config": config, "config_error": config_error, "game": game}
+            return {
+                "app": "reachy_mini_i_spy",
+                "deployment_profile": self._deployment_profile,
+                "compute_host": "Reachy Mini CM4" if self._deployment_profile == "wireless" else "connected Mac/PC",
+                "config": config,
+                "config_error": config_error,
+                "game": game,
+            }
 
         @self.settings_app.post("/api/caregiver/session")
         def caregiver_session(request: Request) -> dict[str, object]:
@@ -91,8 +99,24 @@ class ReachyMiniISpy(ReachyMiniApp):
                 save_config(merged)
             except (OSError, ValueError) as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
-            _LOGGER.info("I Spy provider settings updated (credentials redacted)")
+            _LOGGER.info("I Spy in-process provider settings updated (credentials redacted)")
             return {"ok": True, "config": merged.public_dict(privileged=True), "csrf_token": next_csrf}
+
+        @self.settings_app.post("/api/local/setup")
+        def setup_local_provider(
+            request: Request,
+            x_i_spy_csrf: str | None = Header(default=None),
+        ) -> dict[str, object]:
+            next_csrf = self._caregiver.authorize(request, x_i_spy_csrf)
+            if self._runtime is not None and self._runtime.snapshot()["camera_active"]:
+                raise HTTPException(status_code=409, detail="Stop the active game before installing local models")
+            try:
+                assets = install_local_assets()
+            except (OSError, ValueError) as exc:
+                _LOGGER.warning("Local I Spy model setup failed safely (%s)", type(exc).__name__)
+                raise HTTPException(status_code=502, detail="Local model setup failed safely") from exc
+            _LOGGER.info("Local I Spy model assets installed and verified")
+            return {"ok": True, "assets": assets, "csrf_token": next_csrf}
 
         @self.settings_app.post("/api/game/start")
         def start_game(
@@ -102,7 +126,7 @@ class ReachyMiniISpy(ReachyMiniApp):
         ) -> dict[str, object]:
             next_csrf = self._caregiver.authorize(request, x_i_spy_csrf)
             if not load_config().configured:
-                raise HTTPException(status_code=409, detail="Configure the scoped Hermes broker first")
+                raise HTTPException(status_code=409, detail="Configure a supported standalone provider first")
             try:
                 return {"ok": True, "game": self._runtime_or_409().start(
                     payload.language, payload.age_band, payload.camera_consent

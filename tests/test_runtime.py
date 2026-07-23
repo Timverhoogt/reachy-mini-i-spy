@@ -874,47 +874,22 @@ def test_stop_after_round_check_cannot_create_or_retain_provider(monkeypatch) ->
     assert runtime._providers == {}
 
 
-def test_stop_revokes_local_provider_before_scheduling_remote_cancel(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+def test_stop_revokes_in_process_provider() -> None:
     runtime = GameRuntime(FakeRobot(), threading.Event())
     generation = runtime.machine.start(language="en", age_band="7-9", camera_consent=True)
     local_cancelled = threading.Event()
-    remote_cancelled = threading.Event()
-    scheduled: list[object] = []
 
     class TrackedProvider:
         def cancel_local(self) -> bool:
             local_cancelled.set()
             return True
 
-        def cancel_broker(self) -> None:
-            assert local_cancelled.is_set()
-            remote_cancelled.set()
-
-    class DeferredThread:
-        def __init__(self, *, target: object, **_: object) -> None:
-            scheduled.append(target)
-
-        def start(self) -> None:
-            pass
-
-    original_thread = threading.Thread
-
-    def defer_only_remote_cancel(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
-        if kwargs.get("name") == "ispy-broker-cancel":
-            return DeferredThread(target=kwargs["target"])
-        return original_thread(*args, **kwargs)  # type: ignore[arg-type]
-
     runtime._providers[generation] = TrackedProvider()  # type: ignore[assignment]
-    monkeypatch.setattr(runtime_module.threading, "Thread", defer_only_remote_cancel)
 
     runtime.stop()
 
     assert local_cancelled.is_set()
-    assert not remote_cancelled.is_set()
     assert runtime._providers == {}
-    assert len(scheduled) == 1
-    scheduled[0]()  # type: ignore[operator]
-    assert remote_cancelled.is_set()
 
 
 def test_stop_after_tts_check_cannot_invoke_provider(monkeypatch) -> None:  # type: ignore[no-untyped-def]

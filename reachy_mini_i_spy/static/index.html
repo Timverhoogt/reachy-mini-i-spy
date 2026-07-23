@@ -51,15 +51,23 @@
       </form>
     </section>
 
-    <details class="card">
-      <summary>Caregiver I Spy broker settings</summary>
-      <p class="muted">Only a scoped I Spy broker token is stored on Reachy. Provider credentials stay on the separate broker host.</p>
+    <details class="card" open>
+      <summary>Standalone vision settings</summary>
+      <p id="compute-profile" class="muted">Detecting whether compute runs on Reachy Wireless or the connected Lite host…</p>
+      <p class="muted">No Hermes installation, provider broker, or second server is required. The API key is stored owner-only on the machine running the Reachy daemon and is never returned by the status API.</p>
       <form id="settings-form" autocomplete="off">
         <label>Caregiver access token<input id="caregiver-token" type="password" autocomplete="off" placeholder="Required for Start, guesses, and settings"></label>
-        <label>I Spy broker URL<input id="provider-url" type="url" required></label>
-        <label>Scoped broker token<input id="broker-token" type="password" autocomplete="new-password" placeholder="Leave blank to keep current token"></label>
-        <label>Broker-bound device ID<input id="device-id" maxlength="64" required></label>
-        <p class="muted">Models, prompts, limits, moderation, and provider credentials are fixed on the broker host and cannot be changed here.</p>
+        <label>Vision mode
+          <select id="provider">
+            <option value="openai">OpenAI — one API key, robot-speaker audio</option>
+            <option value="local">Local ONNX — no key, offline after setup</option>
+          </select>
+        </label>
+        <label>OpenAI API key<input id="api-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep the saved key"></label>
+        <p class="muted">Local mode downloads about 35 MB of pinned English/Dutch voice assets once, verifies their SHA-256 hashes, and then keeps frames and speech on this compute host.</p>
+        <button id="local-setup" class="secondary" type="button">Install / verify local models</button>
+        <span id="local-state" class="muted"></span>
+        <p class="muted">The app fixes its provider URL, models, prompts and safety bounds. Free Hugging Face inference is not used as a default because it requires a token and currently includes only $0.10/month in credits.</p>
         <button class="secondary" type="submit">Save private settings</button>
         <span id="config-state" class="muted"></span>
       </form>

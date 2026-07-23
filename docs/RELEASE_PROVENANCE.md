@@ -10,7 +10,7 @@ SHA-256: 56e821d241f323144f6b9af2baacd7eb8929ed63de641944eacd32d0d911ca6e
 Hardware: supervised Reachy Mini Lite
 ```
 
-The same bytes are published in the [v0.1.0 GitHub release](https://github.com/Timverhoogt/reachy-mini-i-spy/releases/tag/v0.1.0) and the [Reachy app-catalog Space](https://huggingface.co/spaces/Timbo89/reachy_mini_i_spy), whose verified source revision at publication was `1a5231d2178e5c2d703ca06c245bec3a63e11914`.
+The same bytes remain in the [v0.1.0 GitHub release](https://github.com/Timverhoogt/reachy-mini-i-spy/releases/tag/v0.1.0) and the [historical Space mirror](https://huggingface.co/spaces/Timbo89/reachy_mini_i_spy), whose verified source revision at publication was `1a5231d2178e5c2d703ca06c245bec3a63e11914`. The Space was deliberately delisted from the Reachy app catalog before the in-process provider redesign; `0.1.0` should not be installed as the current standalone setup.
 
 ## Acceptance evidence
 
@@ -28,13 +28,11 @@ Only the exact digest above inherits the recorded physical acceptance. Rebuilt w
 
 ## Distribution boundary
 
-The Reachy wheel intentionally excludes:
+The current Reachy wheel intentionally excludes:
 
-- `hermes_broker/`;
-- `deploy/`;
 - tests and scripts;
 - local configuration;
-- provider or device credentials;
+- provider credentials;
 - captured frames, audio, guesses, or transcripts.
 
 Run `scripts/check_artifacts.py` against every release artifact before publication.
