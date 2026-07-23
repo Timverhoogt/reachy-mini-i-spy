@@ -2,7 +2,6 @@
 
 const $ = (id) => document.getElementById(id);
 let currentState = "not_started";
-let csrfToken = "";
 
 function toast(message) {
   $("toast").textContent = message;
@@ -15,30 +14,6 @@ async function request(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.detail || "Request failed safely");
   return data;
-}
-
-async function authorizedRequest(path, options = {}) {
-  const caregiverToken = $("caregiver-token").value;
-  if (!caregiverToken) throw new Error("Enter the caregiver access token first");
-  if (!csrfToken) {
-    const session = await request("/api/caregiver/session", {
-      method: "POST", headers: { "Authorization": `Bearer ${caregiverToken}` },
-    });
-    csrfToken = session.csrf_token;
-  }
-  const headers = {
-    ...(options.headers || {}),
-    "Authorization": `Bearer ${caregiverToken}`,
-    "X-I-Spy-CSRF": csrfToken,
-  };
-  try {
-    const data = await request(path, { ...options, headers });
-    csrfToken = data.csrf_token || "";
-    return data;
-  } catch (error) {
-    csrfToken = "";
-    throw error;
-  }
 }
 
 function render(game) {
@@ -60,15 +35,23 @@ async function refresh() {
     const data = await request("/api/status");
     render(data.game);
     const config = data.config || {};
-    $("provider-url").value = config.broker_url || "";
-    $("device-id").value = config.device_id || "reachy-mini";
-    $("config-state").textContent = config.broker_token_configured ? "Scoped token configured" : "Scoped token required";
+    $("provider").value = config.provider || "openai";
+    $("compute-profile").textContent = data.deployment_profile === "wireless"
+      ? "Wireless: vision and provider calls run on Reachy's onboard CM4."
+      : "Lite: vision and provider calls run on this connected Mac/PC.";
+    const localAssets = config.local_assets || {};
+    $("local-state").textContent = localAssets.ready
+      ? "Local models installed and verified"
+      : "Local models not installed";
+    $("config-state").textContent = config.provider === "local"
+      ? (localAssets.ready ? "Local mode ready" : "Install local models first")
+      : (config.api_key_configured ? "API key configured" : "API key required");
   } catch (error) { toast(error.message); }
 }
 
 $("start").addEventListener("click", async () => {
   try {
-    const data = await authorizedRequest("/api/game/start", {
+    const data = await request("/api/game/start", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         language: $("language").value, age_band: $("age").value,
@@ -93,7 +76,7 @@ $("guess-form").addEventListener("submit", async (event) => {
   if (!text) return;
   $("guess").value = "";
   try {
-    await authorizedRequest("/api/game/guess", {
+    await request("/api/game/guess", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
     });
   } catch (error) { toast(error.message); }
@@ -101,18 +84,31 @@ $("guess-form").addEventListener("submit", async (event) => {
 
 $("settings-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const payload = {
-    provider_url: $("provider-url").value, device_id: $("device-id").value,
-  };
-  if ($("broker-token").value) payload.broker_token = $("broker-token").value;
+  const payload = { provider: $("provider").value };
+  if ($("api-key").value) payload.api_key = $("api-key").value;
   try {
-    const data = await authorizedRequest("/api/settings", {
+    const data = await request("/api/settings", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
     });
-    $("broker-token").value = "";
-    $("config-state").textContent = data.config.broker_token_configured
-      ? "Saved; scoped token configured" : "Scoped token required";
+    $("api-key").value = "";
+    $("config-state").textContent = data.config.provider === "local"
+      ? (data.config.local_assets.ready ? "Saved; local mode ready" : "Saved; install local models first")
+      : (data.config.api_key_configured ? "Saved; API key configured" : "API key required");
   } catch (error) { toast(error.message); }
+});
+
+$("local-setup").addEventListener("click", async () => {
+  $("local-state").textContent = "Downloading and verifying local models…";
+  try {
+    const data = await request("/api/local/setup", { method: "POST" });
+    $("local-state").textContent = data.assets.ready
+      ? "Local models installed and verified"
+      : "Local model setup incomplete";
+    $("config-state").textContent = data.assets.ready ? "Local mode ready" : "Install local models first";
+  } catch (error) {
+    $("local-state").textContent = "Local model setup failed";
+    toast(error.message);
+  }
 });
 
 $("mic").addEventListener("click", () => {

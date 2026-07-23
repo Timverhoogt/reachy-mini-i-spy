@@ -1,4 +1,4 @@
-"""Local, secret-safe configuration for I Spy."""
+"""Owner-only configuration for standalone I Spy providers."""
 
 from __future__ import annotations
 
@@ -6,27 +6,37 @@ import json
 import os
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
-from urllib.parse import urlparse
+from typing import Literal
+
+ProviderMode = Literal["openai", "local"]
 
 
 @dataclass(frozen=True)
 class AppConfig:
-    provider_url: str = ""
-    broker_token: str = ""
-    device_id: str = "reachy-mini"
+    """Private provider settings stored on the machine running the Reachy daemon."""
+
+    provider: ProviderMode = "openai"
+    api_key: str = ""
 
     @property
     def configured(self) -> bool:
-        return bool(self.broker_token and self.device_id and self.provider_url)
+        if self.provider == "local":
+            from .local_assets import local_assets_status
 
-    def public_dict(self, *, privileged: bool = False) -> dict[str, object]:
+            return bool(local_assets_status()["ready"])
+        return self.provider == "openai" and bool(self.api_key)
+
+    def public_dict(self) -> dict[str, object]:
         payload: dict[str, object] = {
-            "broker_token_configured": bool(self.broker_token),
-            "provider_boundary": "hermes_scoped_ispy_broker",
-            "provider_credentials_on_reachy": False,
+            "provider": self.provider,
+            "api_key_configured": bool(self.api_key),
+            "provider_boundary": "in_process_fixed_policy",
+            "separate_broker_required": False,
         }
-        if privileged:
-            payload.update(broker_url=self.provider_url, device_id=self.device_id)
+        if self.provider == "local":
+            from .local_assets import local_assets_status
+
+            payload["local_assets"] = local_assets_status()
         return payload
 
 
@@ -38,35 +48,31 @@ def config_path() -> Path:
 
 
 def _validate(config: AppConfig) -> AppConfig:
-    parsed = urlparse(config.provider_url)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("Broker URL must be an absolute HTTP(S) URL")
-    if parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
-        raise ValueError("Remote broker URLs must use HTTPS")
-    if parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise ValueError("Broker URL must not contain credentials, query parameters, or fragments")
-    if parsed.hostname in {"api.openai.com", "api.anthropic.com"} or not parsed.path.rstrip("/").endswith("/ispy/v1"):
-        raise ValueError("Use the narrow I Spy provider broker endpoint ending in /ispy/v1")
-    if not config.device_id or len(config.device_id) > 64 or not config.device_id.replace("-", "").isalnum():
-        raise ValueError("Invalid device_id")
-    if len(config.broker_token) > 512 or any(ch in config.broker_token for ch in "\r\n"):
-        raise ValueError("Invalid broker token")
-    return replace(config, provider_url=config.provider_url.rstrip("/"))
+    if config.provider not in {"openai", "local"}:
+        raise ValueError("Provider must be openai or local")
+    if not isinstance(config.api_key, str) or len(config.api_key) > 512 or any(ch in config.api_key for ch in "\r\n"):
+        raise ValueError("Invalid API key")
+    if config.provider == "local" and config.api_key:
+        # Do not retain an unrelated cloud credential while local-only mode is selected.
+        return replace(config, api_key="")
+    return config
 
 
 def load_config(path: Path | None = None) -> AppConfig:
     path = path or config_path()
     if not path.exists():
-        config = AppConfig(
-            provider_url=os.environ.get("REACHY_MINI_I_SPY_BROKER_URL", ""),
-            broker_token=os.environ.get("REACHY_MINI_I_SPY_BROKER_TOKEN", ""),
-        )
-        return _validate(config) if config.provider_url else config
+        key = os.environ.get("REACHY_MINI_I_SPY_API_KEY", "")
+        provider = os.environ.get("REACHY_MINI_I_SPY_PROVIDER", "openai")
+        return _validate(AppConfig(provider=provider, api_key=key))  # type: ignore[arg-type]
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("Configuration must be an object")
+
+    # Old broker-only files fail closed into an unconfigured direct provider.
+    # Their token and URL are ignored and disappear on the next settings save.
     allowed = set(AppConfig.__dataclass_fields__)
-    return _validate(AppConfig(**{key: value for key, value in payload.items() if key in allowed}))
+    clean = {key: value for key, value in payload.items() if key in allowed}
+    return _validate(AppConfig(**clean))
 
 
 def save_config(config: AppConfig, path: Path | None = None) -> Path:
@@ -93,6 +99,6 @@ def merge_config(current: AppConfig, changes: dict[str, object]) -> AppConfig:
     if unknown:
         raise ValueError("Unknown configuration field")
     clean = {key: value for key, value in changes.items() if value is not None}
-    if clean.get("broker_token") == "":
-        clean.pop("broker_token")
+    if clean.get("api_key") == "":
+        clean.pop("api_key")
     return _validate(replace(current, **clean))

@@ -77,8 +77,15 @@ def _contains_disallowed(text: str) -> bool:
     return bool(words & DISALLOWED_TERMS)
 
 
-def validate_target(payload: object, *, frame_count: int) -> Target:
+def validate_target(
+    payload: object,
+    *,
+    frame_count: int,
+    minimum_confidence: float = 0.78,
+) -> Target:
     """Validate a provider candidate. Any ambiguity fails closed."""
+    if not 0.0 <= minimum_confidence <= 1.0:
+        raise ValueError("Candidate confidence policy is invalid")
     if not isinstance(payload, dict) or payload.get("stable") is not True:
         raise ValueError("Candidate is not stable")
     visible_frame_count = int(payload.get("visible_frame_count", 0))
@@ -93,7 +100,7 @@ def validate_target(payload: object, *, frame_count: int) -> Target:
     if _contains_disallowed(" ".join((name, category, location))):
         raise ValueError("Candidate belongs to a disallowed class")
     confidence = float(payload.get("confidence", 0.0))
-    if confidence < 0.78 or confidence > 1.0:
+    if confidence < minimum_confidence or confidence > 1.0:
         raise ValueError("Candidate confidence is too low")
     frame_index = int(payload.get("frame_index", -1))
     if not 0 <= frame_index < frame_count:
@@ -140,7 +147,7 @@ class GameMachine:
         if language not in {"en", "nl"} or age_band not in {"4-6", "7-9", "10-12"}:
             raise ValueError("Unsupported game settings")
         if not camera_consent:
-            raise PermissionError("Caregiver camera opt-in is required for each game session")
+            raise PermissionError("Camera opt-in is required for each game session")
         with self._lock:
             self.generation += 1
             self.language, self.age_band = language, age_band
@@ -214,7 +221,7 @@ class GameMachine:
             return self.generation
 
     def fail_if_current(self, generation: int, message: str) -> int | None:
-        """Fail only the active generation so a concurrent caregiver Stop always wins."""
+        """Fail only the active generation so a concurrent user Stop always wins."""
         with self._lock:
             if not self._is_current_unlocked(generation):
                 return None

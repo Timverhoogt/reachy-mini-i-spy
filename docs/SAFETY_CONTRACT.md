@@ -5,7 +5,7 @@ This document is normative for the standalone Reachy Mini I Spy app. UI text and
 ## Consent and camera lifecycle
 
 - Every session starts with camera access disabled.
-- A caregiver must explicitly opt in for each start.
+- The user must explicitly opt in for each start.
 - Capture is limited to three transient JPEG viewpoints during a bounded search.
 - Stop, reveal, error, shutdown, or consent revocation invalidates the active generation and disables camera use.
 - Late provider, motion, speech, or selection results from an invalid generation are discarded.
@@ -16,10 +16,10 @@ This document is normative for the standalone Reachy Mini I Spy app. UI text and
 A candidate is accepted only when all of the following hold:
 
 - provider marks it stable;
-- it is visible in at least two retained viewpoints and no more than the supplied frame count;
+- its safe class is visible in at least two retained viewpoints; only the strongest instance per class/view counts, and one exact box is retained to disambiguate rooms containing several chairs or similar objects;
 - object name, category, location, and hints are bounded printable text;
 - colour is one of the approved English/Dutch colour keys;
-- confidence is between `0.78` and `1.0`;
+- local YOLOX confidence is between `0.30` and `1.0`, with stability in at least two viewpoints; cloud candidates retain the stricter `0.78` schema floor;
 - frame index addresses a retained frame;
 - normalized bounding box stays inside the image;
 - box area is between `0.025` and `0.65`, with width and height each at least `0.12`;
@@ -40,14 +40,17 @@ The executable source of these invariants is `reachy_mini_i_spy/game.py::validat
 
 ## Moderation and speech
 
-- Guesses and generated output are moderated through the fixed broker.
+- Cloud guesses and generated output are moderated through fixed in-process provider operations.
+- Local mode accepts only an explicit COCO target allowlist, reviewed bilingual hints/aliases and bounded text that passes the deterministic deny policy.
 - Spoken output is checked immediately before synthesis.
-- Reachy cannot choose provider models, provider URLs, system prompts, or voices through request fields.
-- Missing moderation or synthesis authorization fails closed.
+- The app UI cannot choose provider URLs, models, system prompts, tools, or voices.
+- Missing cloud moderation, missing local model assets or failed synthesis authorization fails closed.
 
 ## Privacy and authority boundaries
 
-The standalone app and broker have no personal memory, face recognition, general agent tools, private files, messaging, smart-home control, purchasing, or unrestricted provider API. Scoped client credentials authorize only the fixed I Spy broker and are bound to one device ID.
+The standalone app has no personal memory, face recognition, general agent tools, private-file access, messaging, smart-home control, purchasing, or unrestricted provider API. In cloud mode the provider key is stored owner-only on the daemon host, is used only with fixed endpoints and models, and is never returned through the status API or written to logs. Local mode needs no provider credential and sends no gameplay content to an inference service.
+
+On Reachy Mini Lite, the daemon host is the connected Mac/PC. On Reachy Mini Wireless, it is Reachy's onboard CM4. No second host or Hermes service is part of the runtime boundary.
 
 ## Origin and coordination with Reachy Mini Hermes
 

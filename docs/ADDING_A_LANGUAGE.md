@@ -39,9 +39,9 @@ Before editing code, record:
 | Item | Example | Requirement |
 |---|---|---|
 | Internal code | `fr` | Short, lowercase, stable identifier used by APIs and game state |
-| Native display name | `Français` | What the caregiver sees in the selector |
+| Native display name | `Français` | What the user sees in the selector |
 | Browser locale | `fr-FR` | Valid BCP 47 locale supported by target browsers |
-| TTS language instruction | `French (fr-FR)` | Explicit broker-controlled instruction; never infer from user text |
+| TTS language instruction | `French (fr-FR)` | Explicit fixed-provider instruction; never infer from user text |
 | Writing direction | `ltr` or `rtl` | Required for UI layout and text fields |
 | Reviewer | Native/fluent adult | Reviews child-facing language and safety vocabulary |
 | Provider support | moderation, vision, guess judging, TTS | Must be verified for the selected language |
@@ -63,7 +63,7 @@ From the repository root, search before changing anything:
 
 ```sh
 rg 'Language|language ==|language !=|Literal\[|hints_en|hints_nl|en-US|nl-NL|English|Dutch' \
-  reachy_mini_i_spy hermes_broker tests
+  reachy_mini_i_spy tests
 ```
 
 The current two-language implementation contains `if language == "en" else ...` branches. Before adding a third language, replace every affected two-way branch with an explicit phrase table, locale map, or `match` statement. Otherwise the new language can accidentally receive Dutch text.
@@ -141,19 +141,19 @@ Also:
 - do not send an unsupported locale and pretend recognition succeeded;
 - preserve the visible Stop control in every layout and viewport.
 
-Translate additional caregiver-facing UI labels if the contribution claims a localized UI rather than localized gameplay only. State the scope clearly in release notes.
+Translate additional user-facing UI labels if the contribution claims a localized UI rather than localized gameplay only. State the scope clearly in release notes.
 
-## 6. Extend the dedicated broker schema
+## 6. Extend the fixed in-process provider schema
 
-Update `hermes_broker/app.py`:
+Update `reachy_mini_i_spy/provider.py`:
 
-1. Add the code to `SelectRequest`, `GuessRequest`, and `TTSRequest`.
-2. Add `hints_fr`—using your language code—to `TargetReference`.
-3. Add the same field to `TARGET_RESPONSE_SCHEMA` and its strict `required` list.
+1. Add `hints_fr`—using your language code—to the target schema and game target representation.
+2. Add the same field to `TARGET_RESPONSE_SCHEMA` and its strict `required` list.
+3. Extend the provider method type annotations with the explicit language code.
 4. Instruct target selection to return one to three child-safe hints in the new language.
 5. Include the target name, colour clue, location, and new hints in moderation checks.
 6. Pass the explicit language code to guess judging.
-7. Map the language code to an explicit broker-controlled TTS instruction.
+7. Map the language code to an explicit app-controlled TTS instruction.
 8. Verify the configured provider/model supports moderation, structured vision output, guess judging, and speech for the language.
 
 Keep these invariants unchanged:
@@ -161,8 +161,8 @@ Keep these invariants unchanged:
 - strict structured output with unknown fields rejected;
 - no caller-selected provider, model, prompt, voice, or upstream URL;
 - bounded request bodies and timeouts;
-- scoped device/session authentication;
-- request serialization and replay rejection;
+- owner-only provider credentials that never appear in status or logs;
+- generation cancellation and rejection of late provider results;
 - target-category, visibility, confidence, size, colour, and location checks;
 - moderation before selection and immediately before speech;
 - fail-closed behavior when any required provider capability is unavailable.
@@ -256,7 +256,7 @@ Machine translation alone is not sufficient for a child-facing release.
 
 Build a new version and record its exact digest. On a supervised Reachy Mini, verify at least one complete round and the critical failure paths in the new language:
 
-1. Caregiver camera consent is required for each start.
+1. Camera opt-in is required for each start.
 2. Search movement and three-frame capture remain bounded.
 3. Intro, colour clue, hints, guesses, reveal, and TTS use the selected language.
 4. Typed guesses work even if speech recognition is unavailable.

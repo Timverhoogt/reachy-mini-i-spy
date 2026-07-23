@@ -28,7 +28,7 @@ def _running_runtime(monkeypatch, robot, *, speak=None):  # type: ignore[no-unty
 
 
 def test_camera_disable_revoke_mid_round_folds_and_kills_camera(monkeypatch) -> None:  # type: ignore[no-untyped-def]
-    """/api/camera/disable must behave exactly like a caregiver Stop."""
+    """/api/camera/disable must behave exactly like a user Stop."""
     robot = FakeRobot()
     select_entered = threading.Event()
     release = threading.Event()
@@ -44,7 +44,7 @@ def test_camera_disable_revoke_mid_round_folds_and_kills_camera(monkeypatch) -> 
     try:
         runtime.start("en", "7-9", True)
         assert select_entered.wait(2)
-        # Caregiver revokes camera consent while the vision call is in flight.
+        # The user revokes camera consent while the vision call is in flight.
         revoked = runtime.stop("camera_disabled")
         assert revoked["camera_active"] is False
         release.set()

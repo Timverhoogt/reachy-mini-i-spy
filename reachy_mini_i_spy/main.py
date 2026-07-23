@@ -2,25 +2,38 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
+import urllib.request
 from typing import Literal
 
-from fastapi import Header, HTTPException, Request
+from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from reachy_mini import ReachyMini, ReachyMiniApp
 
-from .auth import CaregiverGuard
 from .config import load_config, merge_config, save_config
+from .local_assets import install_local_assets
 from .runtime import GameRuntime
 
 _LOGGER = logging.getLogger(__name__)
 
 
+def _running_on_wireless(requested: bool) -> bool:
+    """Recover the daemon's SKU flag when its app launcher omits constructor arguments."""
+    if requested:
+        return True
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8000/api/daemon/status", timeout=1.0) as response:
+            payload = json.load(response)
+        return isinstance(payload, dict) and payload.get("wireless_version") is True
+    except (OSError, ValueError):
+        return False
+
+
 class SettingsUpdate(BaseModel):
-    provider_url: str | None = Field(default=None, max_length=300)
-    broker_token: str | None = Field(default=None, max_length=512)
-    device_id: str | None = Field(default=None, min_length=1, max_length=64)
+    provider: Literal["openai", "local"] | None = None
+    api_key: str | None = Field(default=None, max_length=512)
 
 
 class StartRequest(BaseModel):
@@ -36,13 +49,13 @@ class GuessRequest(BaseModel):
 class ReachyMiniISpy(ReachyMiniApp):
     """A camera-opt-in, child-safe embodied guessing game."""
 
-    custom_app_url: str | None = "http://0.0.0.0:8042"
+    custom_app_url: str | None = "http://127.0.0.1:8042"
     request_media_backend: str | None = "local"
 
     def __init__(self, running_on_wireless: bool = False) -> None:
         super().__init__(running_on_wireless=running_on_wireless)
+        self._deployment_profile = "wireless" if _running_on_wireless(running_on_wireless) else "lite_host"
         self._runtime: GameRuntime | None = None
-        self._caregiver = CaregiverGuard()
         self._register_routes()
 
     def _runtime_or_409(self) -> GameRuntime:
@@ -55,9 +68,9 @@ class ReachyMiniISpy(ReachyMiniApp):
             return
 
         @self.settings_app.get("/api/status")
-        def status(request: Request) -> dict[str, object]:
+        def status() -> dict[str, object]:
             try:
-                config = load_config().public_dict(privileged=self._caregiver.authenticated(request))
+                config = load_config().public_dict()
                 config_error = ""
             except Exception:
                 config = {}
@@ -72,58 +85,60 @@ class ReachyMiniISpy(ReachyMiniApp):
                     "target": None,
                 }
             )
-            return {"app": "reachy_mini_i_spy", "config": config, "config_error": config_error, "game": game}
-
-        @self.settings_app.post("/api/caregiver/session")
-        def caregiver_session(request: Request) -> dict[str, object]:
-            return {"ok": True, "csrf_token": self._caregiver.issue(request)}
+            return {
+                "app": "reachy_mini_i_spy",
+                "deployment_profile": self._deployment_profile,
+                "compute_host": "Reachy Mini CM4" if self._deployment_profile == "wireless" else "connected Mac/PC",
+                "config": config,
+                "config_error": config_error,
+                "game": game,
+            }
 
         @self.settings_app.post("/api/settings")
-        def update_settings(
-            update: SettingsUpdate,
-            request: Request,
-            x_i_spy_csrf: str | None = Header(default=None),
-        ) -> dict[str, object]:
-            next_csrf = self._caregiver.authorize(request, x_i_spy_csrf)
+        def update_settings(update: SettingsUpdate) -> dict[str, object]:
             try:
                 current = load_config()
                 merged = merge_config(current, update.model_dump(exclude_none=True))
                 save_config(merged)
             except (OSError, ValueError) as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
-            _LOGGER.info("I Spy provider settings updated (credentials redacted)")
-            return {"ok": True, "config": merged.public_dict(privileged=True), "csrf_token": next_csrf}
+            _LOGGER.info("I Spy in-process provider settings updated (credentials redacted)")
+            return {"ok": True, "config": merged.public_dict()}
+
+        @self.settings_app.post("/api/local/setup")
+        def setup_local_provider() -> dict[str, object]:
+            if self._runtime is not None and self._runtime.snapshot()["camera_active"]:
+                raise HTTPException(status_code=409, detail="Stop the active game before installing local models")
+            try:
+                assets = install_local_assets()
+            except (OSError, ValueError) as exc:
+                _LOGGER.warning("Local I Spy model setup failed safely (%s)", type(exc).__name__)
+                raise HTTPException(status_code=502, detail="Local model setup failed safely") from exc
+            _LOGGER.info("Local I Spy model assets installed and verified")
+            return {"ok": True, "assets": assets}
 
         @self.settings_app.post("/api/game/start")
-        def start_game(
-            payload: StartRequest,
-            request: Request,
-            x_i_spy_csrf: str | None = Header(default=None),
-        ) -> dict[str, object]:
-            next_csrf = self._caregiver.authorize(request, x_i_spy_csrf)
+        def start_game(payload: StartRequest) -> dict[str, object]:
             if not load_config().configured:
-                raise HTTPException(status_code=409, detail="Configure the scoped Hermes broker first")
+                raise HTTPException(status_code=409, detail="Configure a supported standalone provider first")
             try:
-                return {"ok": True, "game": self._runtime_or_409().start(
-                    payload.language, payload.age_band, payload.camera_consent
-                ), "csrf_token": next_csrf}
+                return {
+                    "ok": True,
+                    "game": self._runtime_or_409().start(
+                        payload.language, payload.age_band, payload.camera_consent
+                    ),
+                }
             except PermissionError as exc:
                 raise HTTPException(status_code=403, detail=str(exc)) from exc
             except RuntimeError as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
 
         @self.settings_app.post("/api/game/guess")
-        def submit_guess(
-            payload: GuessRequest,
-            request: Request,
-            x_i_spy_csrf: str | None = Header(default=None),
-        ) -> dict[str, object]:
-            next_csrf = self._caregiver.authorize(request, x_i_spy_csrf)
+        def submit_guess(payload: GuessRequest) -> dict[str, object]:
             try:
                 return {
                     "ok": True,
                     "game": self._runtime_or_409().guess(payload.text),
-                    "csrf_token": next_csrf,
                 }
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc

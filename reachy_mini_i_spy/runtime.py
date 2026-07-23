@@ -120,6 +120,7 @@ class MotionOwner:
     # converges; keep this grace bounded and cancellable.
     WAKE_POSE_TIMEOUT_SECONDS = 2.0
     WAKE_STOP_BARRIER_TIMEOUT_SECONDS = 3.0
+    STOP_CLEANUP_TIMEOUT_SECONDS = 20.0
     POSE_TIMEOUT_SECONDS = 1.0
 
     SEARCH_POSES = (
@@ -129,6 +130,7 @@ class MotionOwner:
         (12.0, 16.0, 3.0),
         (24.0, 30.0, -4.0),
     )
+    SEARCH_SETTLE_SECONDS = 1.5
     FRAME_CAPTURE_TIMEOUT_SECONDS = 3.0
     FRAME_CAPTURE_RETRY_SECONDS = 0.05
 
@@ -408,7 +410,7 @@ class MotionOwner:
             self._complete_lease(lease)
 
     def search(self, generation: int) -> list[bytes]:
-        """Perform 5.5s choreography and retain only three in-memory JPEGs."""
+        """Perform bounded choreography and retain only three settled in-memory JPEGs."""
         if self.status()["motor_state"] != "awake":
             raise RuntimeError("Search motion requires a verified wake")
         frames: list[bytes] = []
@@ -417,7 +419,7 @@ class MotionOwner:
                 return []
             if not self._goto(body, yaw, pitch, generation=generation):
                 return []
-            if not self._wait(generation, 0.35):
+            if not self._wait(generation, self.SEARCH_SETTLE_SECONDS):
                 return []
             if index in {0, 2, 4}:
                 frame = self._capture_frame(generation, "search")
@@ -776,7 +778,7 @@ class GameRuntime:
             raise RuntimeError("Please wait for the current guess") from exc
         return self.snapshot()
 
-    def stop(self, reason: str = "caregiver") -> dict[str, object]:
+    def stop(self, reason: str = "user") -> dict[str, object]:
         # Invocation gate: operations already queued for publication lose
         # before Stop waits to acquire the linearization lock.
         self._revocation_requested.set()
@@ -805,7 +807,7 @@ class GameRuntime:
         if not leader:
             boundary = sys._getframe()
             try:
-                join_timeout = self.motion.WAKE_STOP_BARRIER_TIMEOUT_SECONDS + 1.0
+                join_timeout = self.motion.STOP_CLEANUP_TIMEOUT_SECONDS + 1.0
                 if not cycle.done.wait(join_timeout):
                     raise PrivacySafeRuntimeError("stop_join_timeout")
                 return self._joined_stop_outcome(cycle)
@@ -883,8 +885,7 @@ class GameRuntime:
             self.motion.revoke_outputs()
             self._request_cleanup(cleanup_epoch)
             self._replace_pending(GameEvent("stop", generation, reason))
-        remotely_cancel = self._cancel_local_providers(revoked_providers)
-        self._schedule_remote_cancels(remotely_cancel)
+        self._cancel_local_providers(revoked_providers)
         with self._audio_lock:
             self._audio_epoch += 1
             self._audio_active_epoch = None
@@ -910,12 +911,15 @@ class GameRuntime:
             # run(); a Stop raised by run() is already on the motion owner.
             self.motion.fold_and_disable()
             self._ack_cleanup(cleanup_epoch)
-        elif not self._wait_for_cleanup(
-            cleanup_epoch,
-            self.motion.WAKE_STOP_BARRIER_TIMEOUT_SECONDS,
-        ):
-            diagnostic_code = "wake_stop_barrier_timeout" if wake_was_active else "stop_cleanup_timeout"
-            raise PrivacySafeRuntimeError(diagnostic_code)
+        else:
+            cleanup_timeout = (
+                self.motion.WAKE_STOP_BARRIER_TIMEOUT_SECONDS
+                if wake_was_active
+                else self.motion.STOP_CLEANUP_TIMEOUT_SECONDS
+            )
+            if not self._wait_for_cleanup(cleanup_epoch, cleanup_timeout):
+                diagnostic_code = "wake_stop_barrier_timeout" if wake_was_active else "stop_cleanup_timeout"
+                raise PrivacySafeRuntimeError(diagnostic_code)
 
         if media_error is not None:
             if any(lease.local_done is not None and not lease.local_done.is_set() for lease in revoked_leases):
@@ -1088,17 +1092,10 @@ class GameRuntime:
         return providers
 
     @staticmethod
-    def _cancel_local_providers(providers: list[ProviderClient]) -> list[ProviderClient]:
-        """Revoke provider objects outside the ownership lock."""
-        return [provider for provider in providers if provider.cancel_local()]
-
-    def _schedule_remote_cancels(self, providers: list[ProviderClient]) -> None:
+    def _cancel_local_providers(providers: list[ProviderClient]) -> None:
+        """Revoke in-process provider objects outside the ownership lock."""
         for provider in providers:
-            threading.Thread(
-                target=provider.cancel_broker,
-                daemon=True,
-                name="ispy-broker-cancel",
-            ).start()
+            provider.cancel_local()
 
     def _cancel_providers(self) -> None:
         with self._ownership_lock:
@@ -1107,8 +1104,7 @@ class GameRuntime:
                 if lease.revoked is not None:
                     lease.revoked.set()
             revoked_providers = self._revoke_providers_locked()
-        remotely_cancel = self._cancel_local_providers(revoked_providers)
-        self._schedule_remote_cancels(remotely_cancel)
+        self._cancel_local_providers(revoked_providers)
 
     def _begin_shutdown(self) -> None:
         """Revoke active work as soon as the SDK requests process shutdown."""
@@ -1125,8 +1121,7 @@ class GameRuntime:
                 if lease.revoked is not None:
                     lease.revoked.set()
             revoked_providers = self._revoke_providers_locked()
-        remotely_cancel = self._cancel_local_providers(revoked_providers)
-        self._schedule_remote_cancels(remotely_cancel)
+        self._cancel_local_providers(revoked_providers)
 
     def _watch_for_shutdown(self) -> None:
         self.stop_event.wait()
@@ -1172,11 +1167,19 @@ class GameRuntime:
                         self.motion.fold_and_disable()
                         self._ack_cleanup(self._epoch)
                 except Exception as exc:
-                    diagnostic_code = (
-                        exc.diagnostic_code
-                        if isinstance(exc, PrivacySafeRuntimeError)
-                        else "unclassified_runtime_failure"
-                    )
+                    if isinstance(exc, PrivacySafeRuntimeError):
+                        diagnostic_code = exc.diagnostic_code
+                    elif isinstance(exc, ProviderError) and load_config().provider == "local":
+                        diagnostic_code = {
+                            "No stable child-safe local target was found": "local_no_target",
+                            "Object colour was unclear": "local_unclear_colour",
+                            "Object colour could not be measured": "local_colour_unavailable",
+                            "Camera frame bounds were not met": "local_frame_bounds",
+                            "Camera frame was not a valid image": "local_invalid_frame",
+                            "Local provider session was cancelled": "local_cancelled",
+                        }.get(str(exc), "local_provider_failure")
+                    else:
+                        diagnostic_code = "unclassified_runtime_failure"
                     _LOGGER.warning(
                         "Game boundary failed closed: %s diagnostic=%s",
                         type(exc).__name__,
