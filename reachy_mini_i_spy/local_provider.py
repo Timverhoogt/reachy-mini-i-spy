@@ -31,34 +31,34 @@ class ObjectInfo:
     aliases_nl: tuple[str, ...] = ()
 
 
-# Explicit child-safe subset of the exact TorchVision COCO label map used by
-# ssdlite320_mobilenet_v3_large. Everything not listed fails closed.
+# Explicit child-safe subset of YOLOX's contiguous COCO-80 label map.
+# Everything not listed fails closed.
 OBJECTS: dict[int, ObjectInfo] = {
-    15: ObjectInfo("bench", "bank", "furniture", "You can sit on it.", "Je kunt erop zitten."),
-    34: ObjectInfo("frisbee", "frisbee", "toy", "You can throw it.", "Je kunt hem gooien."),
-    37: ObjectInfo("ball", "bal", "toy", "It can roll.", "Hij kan rollen.", ("sports ball",), ("sportbal",)),
-    47: ObjectInfo("cup", "beker", "tableware", "You can drink from it.", "Je kunt eruit drinken.", ("mug",), ("mok", "kopje")),
-    51: ObjectInfo("bowl", "kom", "tableware", "It can hold food.", "Er kan eten in.", (), ("schaal",)),
-    52: ObjectInfo("banana", "banaan", "food", "It is a fruit.", "Het is fruit."),
-    53: ObjectInfo("apple", "appel", "food", "It grows on a tree.", "Het groeit aan een boom."),
-    55: ObjectInfo("orange", "sinaasappel", "food", "It is a round fruit.", "Het is rond fruit."),
-    56: ObjectInfo("broccoli", "broccoli", "food", "It is a vegetable.", "Het is groente."),
-    57: ObjectInfo("carrot", "wortel", "food", "It is a vegetable.", "Het is groente."),
-    59: ObjectInfo("pizza", "pizza", "food", "It is usually round.", "Het is meestal rond."),
-    60: ObjectInfo("donut", "donut", "food", "It often has a hole.", "Er zit vaak een gat in."),
-    61: ObjectInfo("cake", "taart", "food", "It is a sweet treat.", "Het is een zoete traktatie."),
-    62: ObjectInfo("chair", "stoel", "furniture", "You can sit on it.", "Je kunt erop zitten."),
-    63: ObjectInfo("sofa", "bank", "furniture", "More than one person can sit on it.", "Je kunt er samen op zitten.", ("couch",), ("zetel",)),
-    64: ObjectInfo("plant", "plant", "decoration", "It has leaves.", "Het heeft bladeren.", ("potted plant",), ("kamerplant",)),
-    67: ObjectInfo("table", "tafel", "furniture", "You can put things on it.", "Je kunt er dingen op zetten.", ("dining table",), ("eettafel",)),
-    78: ObjectInfo("microwave", "magnetron", "appliance", "It can warm food.", "Het kan eten verwarmen."),
-    79: ObjectInfo("oven", "oven", "appliance", "It can bake food.", "Je kunt er eten in bakken."),
-    80: ObjectInfo("toaster", "broodrooster", "appliance", "It can toast bread.", "Het kan brood roosteren."),
-    81: ObjectInfo("sink", "gootsteen", "fixture", "You can wash things in it.", "Je kunt er dingen in wassen."),
-    82: ObjectInfo("refrigerator", "koelkast", "appliance", "It keeps food cold.", "Het houdt eten koud.", ("fridge",), ()),
-    85: ObjectInfo("clock", "klok", "household object", "It shows the time.", "Het geeft de tijd aan."),
-    86: ObjectInfo("vase", "vaas", "decoration", "Flowers can go in it.", "Er kunnen bloemen in."),
-    88: ObjectInfo("teddy bear", "knuffelbeer", "toy", "It is soft and cuddly.", "Hij is zacht om te knuffelen.", ("teddy",), ("beer", "knuffel")),
+    13: ObjectInfo("bench", "bank", "furniture", "You can sit on it.", "Je kunt erop zitten."),
+    29: ObjectInfo("frisbee", "frisbee", "toy", "You can throw it.", "Je kunt hem gooien."),
+    32: ObjectInfo("ball", "bal", "toy", "It can roll.", "Hij kan rollen.", ("sports ball",), ("sportbal",)),
+    41: ObjectInfo("cup", "beker", "tableware", "You can drink from it.", "Je kunt eruit drinken.", ("mug",), ("mok", "kopje")),
+    45: ObjectInfo("bowl", "kom", "tableware", "It can hold food.", "Er kan eten in.", (), ("schaal",)),
+    46: ObjectInfo("banana", "banaan", "food", "It is a fruit.", "Het is fruit."),
+    47: ObjectInfo("apple", "appel", "food", "It grows on a tree.", "Het groeit aan een boom."),
+    49: ObjectInfo("orange", "sinaasappel", "food", "It is a round fruit.", "Het is rond fruit."),
+    50: ObjectInfo("broccoli", "broccoli", "food", "It is a vegetable.", "Het is groente."),
+    51: ObjectInfo("carrot", "wortel", "food", "It is a vegetable.", "Het is groente."),
+    53: ObjectInfo("pizza", "pizza", "food", "It is usually round.", "Het is meestal rond."),
+    54: ObjectInfo("donut", "donut", "food", "It often has a hole.", "Er zit vaak een gat in."),
+    55: ObjectInfo("cake", "taart", "food", "It is a sweet treat.", "Het is een zoete traktatie."),
+    56: ObjectInfo("chair", "stoel", "furniture", "You can sit on it.", "Je kunt erop zitten."),
+    57: ObjectInfo("sofa", "bank", "furniture", "More than one person can sit on it.", "Je kunt er samen op zitten.", ("couch",), ("zetel",)),
+    58: ObjectInfo("plant", "plant", "decoration", "It has leaves.", "Het heeft bladeren.", ("potted plant",), ("kamerplant",)),
+    60: ObjectInfo("table", "tafel", "furniture", "You can put things on it.", "Je kunt er dingen op zetten.", ("dining table",), ("eettafel",)),
+    68: ObjectInfo("microwave", "magnetron", "appliance", "It can warm food.", "Het kan eten verwarmen."),
+    69: ObjectInfo("oven", "oven", "appliance", "It can bake food.", "Je kunt er eten in bakken."),
+    70: ObjectInfo("toaster", "broodrooster", "appliance", "It can toast bread.", "Het kan brood roosteren."),
+    71: ObjectInfo("sink", "gootsteen", "fixture", "You can wash things in it.", "Je kunt er dingen in wassen."),
+    72: ObjectInfo("refrigerator", "koelkast", "appliance", "It keeps food cold.", "Het houdt eten koud.", ("fridge",), ()),
+    74: ObjectInfo("clock", "klok", "household object", "It shows the time.", "Het geeft de tijd aan."),
+    75: ObjectInfo("vase", "vaas", "decoration", "Flowers can go in it.", "Er kunnen bloemen in."),
+    77: ObjectInfo("teddy bear", "knuffelbeer", "toy", "It is soft and cuddly.", "Hij is zacht om te knuffelen.", ("teddy",), ("beer", "knuffel")),
 }
 
 
@@ -71,6 +71,9 @@ class Detection:
 
 
 class LocalProvider:
+    INPUT_SIZE = 416
+    SCORE_THRESHOLD = 0.30
+    NMS_THRESHOLD = 0.45
     _detector: ort.InferenceSession | None = None
     _detector_lock = threading.Lock()
     _tts: ClassVar[dict[str, sherpa_onnx.OfflineTts]] = {}
@@ -111,30 +114,96 @@ class LocalProvider:
         except Exception as exc:
             raise RuntimeError("Camera frame was not a valid image") from exc
 
+    @classmethod
+    def _preprocess(cls, image: Image.Image) -> tuple[np.ndarray, float]:
+        """Letterbox one RGB frame using YOLOX's official BGR/0-255 contract."""
+        ratio = min(cls.INPUT_SIZE / image.height, cls.INPUT_SIZE / image.width)
+        width, height = int(image.width * ratio), int(image.height * ratio)
+        resized = np.asarray(image.resize((width, height), Image.Resampling.BILINEAR), dtype=np.uint8)
+        padded = np.full((cls.INPUT_SIZE, cls.INPUT_SIZE, 3), 114, dtype=np.uint8)
+        padded[:height, :width] = resized[..., ::-1]
+        return np.ascontiguousarray(padded.transpose(2, 0, 1), dtype=np.float32)[None, ...], ratio
+
+    @classmethod
+    def _postprocess(cls, raw: np.ndarray) -> np.ndarray:
+        predictions = np.asarray(raw, dtype=np.float32)
+        if predictions.shape != (1, 3549, 85):
+            raise RuntimeError("Detector output shape was invalid")
+        grids: list[np.ndarray] = []
+        expanded_strides: list[np.ndarray] = []
+        for stride in (8, 16, 32):
+            size = cls.INPUT_SIZE // stride
+            x_values, y_values = np.meshgrid(np.arange(size), np.arange(size))
+            grid = np.stack((x_values, y_values), axis=2).reshape(1, -1, 2)
+            grids.append(grid)
+            expanded_strides.append(np.full((*grid.shape[:2], 1), stride))
+        grid = np.concatenate(grids, axis=1)
+        strides = np.concatenate(expanded_strides, axis=1)
+        decoded = predictions.copy()
+        decoded[..., :2] = (decoded[..., :2] + grid) * strides
+        decoded[..., 2:4] = np.exp(decoded[..., 2:4]) * strides
+        return decoded[0]
+
+    @staticmethod
+    def _nms(boxes: np.ndarray, scores: np.ndarray, threshold: float) -> list[int]:
+        if not len(boxes):
+            return []
+        x1, y1, x2, y2 = boxes.T
+        areas = np.maximum(0.0, x2 - x1) * np.maximum(0.0, y2 - y1)
+        order = scores.argsort()[::-1]
+        keep: list[int] = []
+        while order.size:
+            index = int(order[0])
+            keep.append(index)
+            xx1 = np.maximum(x1[index], x1[order[1:]])
+            yy1 = np.maximum(y1[index], y1[order[1:]])
+            xx2 = np.minimum(x2[index], x2[order[1:]])
+            yy2 = np.minimum(y2[index], y2[order[1:]])
+            intersection = np.maximum(0.0, xx2 - xx1) * np.maximum(0.0, yy2 - yy1)
+            union = areas[index] + areas[order[1:]] - intersection
+            overlap = np.divide(intersection, union, out=np.zeros_like(intersection), where=union > 0)
+            order = order[np.where(overlap <= threshold)[0] + 1]
+        return keep
+
     def _detect(self, frame_jpeg: bytes, frame_index: int) -> tuple[Image.Image, list[Detection]]:
         self._check_current()
         image = self._decode(frame_jpeg)
-        resized = image.resize((320, 320), Image.Resampling.BILINEAR)
-        array = np.asarray(resized, dtype=np.float32).transpose(2, 0, 1)[None, ...] / 255.0
-        outputs = self._detector_session().run(None, {"images": array})
-        boxes, labels, scores = (np.asarray(output) for output in outputs)
+        array, ratio = self._preprocess(image)
+        session = self._detector_session()
+        outputs = session.run(None, {session.get_inputs()[0].name: array})
+        if len(outputs) != 1:
+            raise RuntimeError("Detector output count was invalid")
+        predictions = self._postprocess(np.asarray(outputs[0]))
         self._check_current()
+
+        centre_boxes = predictions[:, :4]
+        class_scores = predictions[:, 4:5] * predictions[:, 5:]
+        boxes = np.empty_like(centre_boxes)
+        boxes[:, 0] = centre_boxes[:, 0] - centre_boxes[:, 2] / 2
+        boxes[:, 1] = centre_boxes[:, 1] - centre_boxes[:, 3] / 2
+        boxes[:, 2] = centre_boxes[:, 0] + centre_boxes[:, 2] / 2
+        boxes[:, 3] = centre_boxes[:, 1] + centre_boxes[:, 3] / 2
+        boxes /= ratio
+
         detections: list[Detection] = []
-        for box, label_raw, score_raw in zip(boxes, labels, scores, strict=True):
-            label = int(label_raw)
-            score = float(score_raw)
-            if score < 0.78:
-                break
-            if label not in OBJECTS:
-                continue
-            x1, y1, x2, y2 = (float(value) / 320.0 for value in box)
-            width, height = x2 - x1, y2 - y1
-            if min(x1, y1, width, height) < 0 or x2 > 1 or y2 > 1:
-                continue
-            area = width * height
-            if area < 0.025 or area > 0.65 or min(width, height) < 0.12:
-                continue
-            detections.append(Detection(label, score, (x1, y1, width, height), frame_index))
+        for label in OBJECTS:
+            scores = class_scores[:, label]
+            selected = np.where(scores >= self.SCORE_THRESHOLD)[0]
+            for relative_index in self._nms(boxes[selected], scores[selected], self.NMS_THRESHOLD):
+                index = int(selected[relative_index])
+                x1, y1, x2, y2 = (float(value) for value in boxes[index])
+                x1, x2 = x1 / image.width, x2 / image.width
+                y1, y2 = y1 / image.height, y2 / image.height
+                width, height = x2 - x1, y2 - y1
+                if min(x1, y1, width, height) < 0 or x2 > 1 or y2 > 1:
+                    continue
+                area = width * height
+                if area < 0.025 or area > 0.65 or min(width, height) < 0.12:
+                    continue
+                detections.append(
+                    Detection(label, float(scores[index]), (x1, y1, width, height), frame_index)
+                )
+        detections.sort(key=lambda detection: detection.score, reverse=True)
         return image, detections
 
     @staticmethod
@@ -205,7 +274,6 @@ class LocalProvider:
             raise RuntimeError("Camera frame bounds were not met")
         images: list[Image.Image] = []
         by_label: dict[int, list[Detection]] = {}
-        ambiguous: set[int] = set()
         for frame_index, frame in enumerate(frames_jpeg):
             image, detections = self._detect(frame, frame_index)
             images.append(image)
@@ -213,14 +281,14 @@ class LocalProvider:
             for detection in detections:
                 per_frame.setdefault(detection.label, []).append(detection)
             for label, matches in per_frame.items():
-                if len(matches) != 1:
-                    ambiguous.add(label)
-                else:
-                    by_label.setdefault(label, []).append(matches[0])
+                # Count at most one instance of a class per viewpoint. Several
+                # chairs in one room must not inflate stability or disqualify
+                # the class; the retained target box disambiguates the object.
+                by_label.setdefault(label, []).append(max(matches, key=lambda match: match.score))
         candidates = [
             (label, matches)
             for label, matches in by_label.items()
-            if label not in ambiguous and len(matches) >= min(2, len(frames_jpeg))
+            if len(matches) >= min(2, len(frames_jpeg))
         ]
         if not candidates:
             raise RuntimeError("No stable child-safe local target was found")
@@ -242,7 +310,7 @@ class LocalProvider:
             "hints_en": [info.hint_en, f"It is {location_en}."],
             "hints_nl": [info.hint_nl, f"Het is {self._location(selected.bbox, 'nl')}."],
         }
-        target = validate_target(payload, frame_count=len(frames_jpeg))
+        target = validate_target(payload, frame_count=len(frames_jpeg), minimum_confidence=self.SCORE_THRESHOLD)
         self.moderate(" ".join((target.object_name, target.category, target.location, *target.hints_en, *target.hints_nl)))
         return target
 
@@ -256,7 +324,25 @@ class LocalProvider:
         if label is None:
             return False
         _, detections = self._detect(frame_jpeg, 0)
-        return sum(detection.label == label for detection in detections) == 1
+        return any(
+            detection.label == label and self._box_iou(detection.bbox, target.bbox) >= 0.25
+            for detection in detections
+        )
+
+    @staticmethod
+    def _box_iou(
+        first: tuple[float, float, float, float],
+        second: tuple[float, float, float, float],
+    ) -> float:
+        first_x, first_y, first_width, first_height = first
+        second_x, second_y, second_width, second_height = second
+        left = max(first_x, second_x)
+        top = max(first_y, second_y)
+        right = min(first_x + first_width, second_x + second_width)
+        bottom = min(first_y + first_height, second_y + second_height)
+        intersection = max(0.0, right - left) * max(0.0, bottom - top)
+        union = first_width * first_height + second_width * second_height - intersection
+        return intersection / union if union > 0 else 0.0
 
     def judge_guess(self, guess: str, target: Target, *, language: Language) -> bool:
         self.moderate(guess)

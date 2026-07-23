@@ -50,8 +50,8 @@ This is one application and one wheel. The UI detects the deployment profile and
 
 ### Local no-key mode — implemented
 
-- A bundled 14 MB ONNX export of TorchVision SSDLite-MobileNet performs object detection on the daemon host.
-- Only an explicit child-safe COCO class allowlist can become a target. Stability, ambiguity, size, colour, location, hints and guesses are handled deterministically.
+- A bundled 3.5 MB official YOLOX-Nano ONNX model performs aspect-preserving object detection on the daemon host.
+- Only an explicit child-safe COCO class allowlist can become a target. Cross-view class stability, exact target boxes, size, colour, location, hints and guesses are handled deterministically.
 - The user clicks **Install / verify local models** once. The app downloads about 35 MB of pinned English/Dutch voice archives, verifies exact SHA-256 digests and safely extracts them into `~/.cache/reachy-mini-i-spy/models`.
 - Offline speech uses Apache-2.0 `sherpa-onnx`, not the GPL Piper runtime. The English LJSpeech dataset is public domain; the Dutch Nathalie dataset is CC0.
 - After setup, frames, guesses and speech stay on the Lite Mac/PC or Wireless CM4. No API key or HF token is needed.

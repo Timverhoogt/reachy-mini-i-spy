@@ -149,6 +149,8 @@ def test_search_motion_is_bounded_and_captures_only_three_frames(monkeypatch) ->
     monkeypatch.setattr(runtime.motion, "_wait", lambda generation, seconds: True)
     frames = runtime.motion.search(generation)
     assert frames == [b"jpeg"] * 3
+    assert runtime.motion.SEARCH_SETTLE_SECONDS == 1.5
+    assert runtime.motion.STOP_CLEANUP_TIMEOUT_SECONDS == 20.0
     assert len(robot.moves) == 5
     for _, move in robot.moves:
         assert abs(float(move["body_yaw"])) <= np.deg2rad(30)

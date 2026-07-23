@@ -16,10 +16,10 @@ This document is normative for the standalone Reachy Mini I Spy app. UI text and
 A candidate is accepted only when all of the following hold:
 
 - provider marks it stable;
-- it is visible in at least two retained viewpoints and no more than the supplied frame count;
+- its safe class is visible in at least two retained viewpoints; only the strongest instance per class/view counts, and one exact box is retained to disambiguate rooms containing several chairs or similar objects;
 - object name, category, location, and hints are bounded printable text;
 - colour is one of the approved English/Dutch colour keys;
-- confidence is between `0.78` and `1.0`;
+- local YOLOX confidence is between `0.30` and `1.0`, with stability in at least two viewpoints; cloud candidates retain the stricter `0.78` schema floor;
 - frame index addresses a retained frame;
 - normalized bounding box stays inside the image;
 - box area is between `0.025` and `0.65`, with width and height each at least `0.12`;

@@ -13,7 +13,7 @@ from functools import lru_cache
 from importlib.resources import files
 from pathlib import Path
 
-DETECTOR_SHA256 = "ee09b0d9f02d938780280eea55794275d592782bdcfd1c1b88aa8308cddc120f"
+DETECTOR_SHA256 = "c789161ed43c8269fcd4e67c67eeeb4e80c622da2eb296a20bc6007bd18a0b7d"
 _MAX_ARCHIVE_BYTES = 80_000_000
 _MAX_EXTRACTED_BYTES = 180_000_000
 
@@ -59,7 +59,7 @@ def model_cache() -> Path:
 
 
 def detector_path() -> Path:
-    return Path(str(files("reachy_mini_i_spy").joinpath("models/ssdlite320_mobilenet_v3_large_coco.onnx")))
+    return Path(str(files("reachy_mini_i_spy").joinpath("models/yolox_nano.onnx")))
 
 
 def voice_path(language: str) -> Path:

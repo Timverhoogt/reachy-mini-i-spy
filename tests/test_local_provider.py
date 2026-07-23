@@ -9,7 +9,7 @@ import pytest
 from PIL import Image
 
 from reachy_mini_i_spy.game import Target
-from reachy_mini_i_spy.local_provider import LocalProvider
+from reachy_mini_i_spy.local_provider import OBJECTS, Detection, LocalProvider
 
 
 def _provider() -> LocalProvider:
@@ -45,6 +45,66 @@ def test_local_policy_and_guess_aliases_fail_closed() -> None:
 def test_local_colour_uses_bounded_central_crop() -> None:
     image = Image.new("RGB", (100, 100), (230, 30, 25))
     assert LocalProvider._colour(image, (0.1, 0.1, 0.8, 0.8)) == "red"
+
+
+def test_yolox_preprocess_letterboxes_without_aspect_distortion() -> None:
+    image = Image.new("RGB", (1280, 720), (255, 0, 0))
+    array, ratio = LocalProvider._preprocess(image)
+    assert array.shape == (1, 3, 416, 416)
+    assert ratio == pytest.approx(0.325)
+    assert tuple(array[0, :, 100, 100]) == (0, 0, 255)  # RGB red converted to BGR
+    assert tuple(array[0, :, 300, 100]) == (114, 114, 114)  # letterbox padding
+
+
+def test_yolox_decode_and_nms_are_deterministic() -> None:
+    raw = np.zeros((1, 3549, 85), dtype=np.float32)
+    decoded = LocalProvider._postprocess(raw)
+    assert decoded.shape == (3549, 85)
+    assert tuple(decoded[0, :4]) == (0, 0, 8, 8)
+    boxes = np.asarray([[0, 0, 100, 100], [5, 5, 95, 95], [200, 200, 250, 250]], dtype=np.float32)
+    scores = np.asarray([0.9, 0.8, 0.7], dtype=np.float32)
+    assert LocalProvider._nms(boxes, scores, 0.45) == [0, 2]
+
+
+def test_local_selection_requires_safe_class_stability_across_two_views(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = _provider()
+    image = Image.new("RGB", (320, 320), (35, 180, 45))
+
+    def detect(_frame: bytes, frame_index: int):  # type: ignore[no-untyped-def]
+        detections = (
+            []
+            if frame_index == 2
+            else [Detection(58, 0.62 + frame_index * 0.08, (0.2, 0.2, 0.4, 0.5), frame_index)]
+        )
+        return image, detections
+
+    monkeypatch.setattr(provider, "_detect", detect)
+    target = provider.select_target([b"a", b"b", b"c"], language="en", age_band="7-9")
+    assert OBJECTS[58].en == "plant"
+    assert target.object_name == "plant"
+    assert target.confidence == pytest.approx(0.70)
+
+
+def test_multiple_instances_count_once_per_view_and_revalidate_by_overlap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = _provider()
+    image = Image.new("RGB", (320, 320), (25, 25, 25))
+
+    def detect(_frame: bytes, frame_index: int):  # type: ignore[no-untyped-def]
+        return image, [
+            Detection(56, 0.80 - frame_index * 0.05, (0.1, 0.1, 0.3, 0.6), frame_index),
+            Detection(56, 0.55, (0.6, 0.2, 0.2, 0.5), frame_index),
+        ]
+
+    monkeypatch.setattr(provider, "_detect", detect)
+    target = provider.select_target([b"a", b"b", b"c"], language="en", age_band="7-9")
+    assert target.object_name == "chair"
+    assert target.confidence == pytest.approx(0.80)
+    assert provider.target_present(b"fresh", target) is True
+    assert LocalProvider._box_iou((0.6, 0.2, 0.2, 0.5), target.bbox) == 0.0
 
 
 def test_fixed_i_spy_phrase_can_synthesize_but_arbitrary_body_text_cannot(

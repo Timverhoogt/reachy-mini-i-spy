@@ -120,6 +120,7 @@ class MotionOwner:
     # converges; keep this grace bounded and cancellable.
     WAKE_POSE_TIMEOUT_SECONDS = 2.0
     WAKE_STOP_BARRIER_TIMEOUT_SECONDS = 3.0
+    STOP_CLEANUP_TIMEOUT_SECONDS = 20.0
     POSE_TIMEOUT_SECONDS = 1.0
 
     SEARCH_POSES = (
@@ -129,6 +130,7 @@ class MotionOwner:
         (12.0, 16.0, 3.0),
         (24.0, 30.0, -4.0),
     )
+    SEARCH_SETTLE_SECONDS = 1.5
     FRAME_CAPTURE_TIMEOUT_SECONDS = 3.0
     FRAME_CAPTURE_RETRY_SECONDS = 0.05
 
@@ -408,7 +410,7 @@ class MotionOwner:
             self._complete_lease(lease)
 
     def search(self, generation: int) -> list[bytes]:
-        """Perform 5.5s choreography and retain only three in-memory JPEGs."""
+        """Perform bounded choreography and retain only three settled in-memory JPEGs."""
         if self.status()["motor_state"] != "awake":
             raise RuntimeError("Search motion requires a verified wake")
         frames: list[bytes] = []
@@ -417,7 +419,7 @@ class MotionOwner:
                 return []
             if not self._goto(body, yaw, pitch, generation=generation):
                 return []
-            if not self._wait(generation, 0.35):
+            if not self._wait(generation, self.SEARCH_SETTLE_SECONDS):
                 return []
             if index in {0, 2, 4}:
                 frame = self._capture_frame(generation, "search")
@@ -805,7 +807,7 @@ class GameRuntime:
         if not leader:
             boundary = sys._getframe()
             try:
-                join_timeout = self.motion.WAKE_STOP_BARRIER_TIMEOUT_SECONDS + 1.0
+                join_timeout = self.motion.STOP_CLEANUP_TIMEOUT_SECONDS + 1.0
                 if not cycle.done.wait(join_timeout):
                     raise PrivacySafeRuntimeError("stop_join_timeout")
                 return self._joined_stop_outcome(cycle)
@@ -909,12 +911,15 @@ class GameRuntime:
             # run(); a Stop raised by run() is already on the motion owner.
             self.motion.fold_and_disable()
             self._ack_cleanup(cleanup_epoch)
-        elif not self._wait_for_cleanup(
-            cleanup_epoch,
-            self.motion.WAKE_STOP_BARRIER_TIMEOUT_SECONDS,
-        ):
-            diagnostic_code = "wake_stop_barrier_timeout" if wake_was_active else "stop_cleanup_timeout"
-            raise PrivacySafeRuntimeError(diagnostic_code)
+        else:
+            cleanup_timeout = (
+                self.motion.WAKE_STOP_BARRIER_TIMEOUT_SECONDS
+                if wake_was_active
+                else self.motion.STOP_CLEANUP_TIMEOUT_SECONDS
+            )
+            if not self._wait_for_cleanup(cleanup_epoch, cleanup_timeout):
+                diagnostic_code = "wake_stop_barrier_timeout" if wake_was_active else "stop_cleanup_timeout"
+                raise PrivacySafeRuntimeError(diagnostic_code)
 
         if media_error is not None:
             if any(lease.local_done is not None and not lease.local_done.is_set() for lease in revoked_leases):

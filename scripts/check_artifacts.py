@@ -21,8 +21,8 @@ FORBIDDEN_MEMBERS = (
     "config.json",
     "secrets.json",
 )
-DETECTOR_SUFFIX = "reachy_mini_i_spy/models/ssdlite320_mobilenet_v3_large_coco.onnx"
-DETECTOR_SHA256 = "ee09b0d9f02d938780280eea55794275d592782bdcfd1c1b88aa8308cddc120f"
+DETECTOR_SUFFIX = "reachy_mini_i_spy/models/yolox_nano.onnx"
+DETECTOR_SHA256 = "c789161ed43c8269fcd4e67c67eeeb4e80c622da2eb296a20bc6007bd18a0b7d"
 REQUIRED_SUFFIXES = (
     DETECTOR_SUFFIX,
     "reachy_mini_i_spy/models/README.md",

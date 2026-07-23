@@ -1,15 +1,12 @@
 # Local detector provenance
 
-File: `ssdlite320_mobilenet_v3_large_coco.onnx`
+File: `yolox_nano.onnx`
 
-- Architecture and weights: TorchVision `ssdlite320_mobilenet_v3_large`, default COCO weights
-- Original weight URL: `https://download.pytorch.org/models/ssdlite320_mobilenet_v3_large_coco-a79551df.pth`
-- Original TorchVision project: `https://github.com/pytorch/vision`
-- TorchVision license: BSD 3-Clause
-- Export environment: Torch 2.5.1 / TorchVision 0.20.1 on aarch64
-- ONNX opset: 18
-- Input: float32 RGB `[1, 3, 320, 320]`, range 0–1
-- Outputs: `boxes`, `labels`, `scores`
-- ONNX SHA-256: `ee09b0d9f02d938780280eea55794275d592782bdcfd1c1b88aa8308cddc120f`
-
+- Architecture and weights: official Megvii YOLOX-Nano COCO release
+- Original asset URL: `https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx`
+- Original project: `https://github.com/Megvii-BaseDetection/YOLOX`
+- License: Apache-2.0
+- SHA-256: `c789161ed43c8269fcd4e67c67eeeb4e80c622da2eb296a20bc6007bd18a0b7d`
+- Input: float32 BGR `[1, 3, 416, 416]`, range 0–255, aspect-preserving letterbox filled with 114
+- Output: decoded in-app from `[1, 3549, 85]`, followed by class-aware NMS
 The app permits only an explicit child-safe subset of the model's COCO labels. All other labels fail closed.
