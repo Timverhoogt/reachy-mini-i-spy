@@ -403,7 +403,7 @@ class LocalProvider:
             text,
             sid=0,
             speed=1.0,
-            callback=lambda _samples, _progress: int(self._cancelled.is_set()),
+            callback=lambda _samples, _progress: int(not self._cancelled.is_set()),
         )
         self._check_current()
         samples = np.asarray(audio.samples, dtype=np.float32)

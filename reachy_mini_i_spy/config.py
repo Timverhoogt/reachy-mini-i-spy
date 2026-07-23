@@ -33,9 +33,10 @@ class AppConfig:
             "provider_boundary": "in_process_fixed_policy",
             "separate_broker_required": False,
         }
-        from .local_assets import local_assets_status
+        if self.provider == "local":
+            from .local_assets import local_assets_status
 
-        payload["local_assets"] = local_assets_status()
+            payload["local_assets"] = local_assets_status()
         return payload
 
 

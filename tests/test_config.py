@@ -21,8 +21,7 @@ def test_api_key_config_is_private_and_redacted(tmp_path: Path) -> None:
     assert public["api_key_configured"] is True
     assert public["provider_boundary"] == "in_process_fixed_policy"
     assert public["separate_broker_required"] is False
-    assert public["local_assets"]["detector_present"] is True
-    assert public["local_assets"]["ready"] is False
+    assert "local_assets" not in public
     assert "provider-secret" not in json.dumps(public)
     assert "api_key" not in public
 
@@ -30,6 +29,14 @@ def test_api_key_config_is_private_and_redacted(tmp_path: Path) -> None:
 def test_blank_key_keeps_existing_key() -> None:
     current = AppConfig(provider="openai", api_key="keep-me")
     assert merge_config(current, {"api_key": ""}).api_key == "keep-me"
+
+
+def test_local_public_status_includes_local_assets(monkeypatch: pytest.MonkeyPatch) -> None:
+    from reachy_mini_i_spy import local_assets
+
+    expected = {"ready": True, "download_bytes": 0}
+    monkeypatch.setattr(local_assets, "local_assets_status", lambda: expected)
+    assert AppConfig(provider="local").public_dict()["local_assets"] == expected
 
 
 def test_provider_url_and_model_controls_are_rejected() -> None:

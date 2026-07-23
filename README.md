@@ -56,7 +56,7 @@ This is one application and one wheel. The UI detects the deployment profile and
 - Offline speech uses Apache-2.0 `sherpa-onnx`, not the GPL Piper runtime. The English LJSpeech dataset is public domain; the Dutch Nathalie dataset is CC0.
 - After setup, frames, guesses and speech stay on the Lite Mac/PC or Wireless CM4. No API key or HF token is needed.
 
-On actual aarch64 Wireless hardware, YOLOX-Nano inference takes about 0.24 seconds per settled frame. Cold English/Dutch speech includes a 10–12 second model load; engines are cached afterward. Cloud mode remains the faster option, while local mode is the private/offline option. Hugging Face hosted inference is not used as a fallback: free users currently receive only $0.10/month in credits and still need an HF token.
+On actual aarch64 Wireless hardware, YOLOX-Nano inference takes about 0.24 seconds per settled frame. Cold English/Dutch speech includes a 10–12 second model load; engines are cached afterward. Cloud mode remains the faster option, while local mode is the private/offline option. Hugging Face hosted inference is not used as a fallback.
 
 ## What it does
 

@@ -2,7 +2,7 @@
 
 ## Supported version
 
-The historical `0.1.0` artifact is delisted. Security work targets the in-development standalone provider release. This remains an alpha, supervised robotics application; do not expose its local UI directly to the public internet.
+Version `0.2.0` is the supported standalone release and is physically accepted on Reachy Mini Wireless. The redesigned Lite-host profile remains pre-acceptance for this version. This is still an alpha, supervised robotics application; do not expose its loopback-only local UI directly to the public internet.
 
 ## Reporting a vulnerability
 

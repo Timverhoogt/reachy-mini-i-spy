@@ -49,7 +49,7 @@ class GuessRequest(BaseModel):
 class ReachyMiniISpy(ReachyMiniApp):
     """A camera-opt-in, child-safe embodied guessing game."""
 
-    custom_app_url: str | None = "http://0.0.0.0:8042"
+    custom_app_url: str | None = "http://127.0.0.1:8042"
     request_media_backend: str | None = "local"
 
     def __init__(self, running_on_wireless: bool = False) -> None:

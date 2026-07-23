@@ -63,3 +63,19 @@ def test_download_rejects_checksum_mismatch(tmp_path: Path, monkeypatch: pytest.
     monkeypatch.setattr(local_assets.urllib.request, "urlopen", lambda *_args, **_kwargs: io.BytesIO(payload))
     with pytest.raises(ValueError, match="checksum"):
         local_assets._download(asset, tmp_path / "archive")
+
+
+def test_download_bytes_are_derived_from_missing_asset_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    detector = tmp_path / "detector.onnx"
+    detector.write_bytes(b"model")
+    assets = {
+        "en": VoiceAsset("en", "https://fixed.invalid/en", "a" * 64, "en", "en.onnx", 11),
+        "nl": VoiceAsset("nl", "https://fixed.invalid/nl", "b" * 64, "nl", "nl.onnx", 22),
+    }
+    monkeypatch.setattr(local_assets, "VOICE_ASSETS", assets)
+    monkeypatch.setattr(local_assets, "detector_path", lambda: detector)
+    monkeypatch.setattr(local_assets, "_detector_ready", lambda: True)
+    monkeypatch.setattr(local_assets, "_voice_ready", lambda asset: asset.language == "en")
+    assert local_assets.local_assets_status()["download_bytes"] == 22

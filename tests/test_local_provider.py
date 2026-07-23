@@ -131,12 +131,19 @@ def test_fixed_i_spy_phrase_can_synthesize_but_arbitrary_body_text_cannot(
         samples = np.linspace(-0.25, 0.25, 1600, dtype=np.float32)
         sample_rate = 16000
 
+    provider = _provider()
+
     class Engine:
-        def generate(self, *_args: object, **_kwargs: object) -> Audio:
+        def generate(self, *_args: object, **kwargs: object) -> Audio:
+            callback = kwargs["callback"]
+            assert callable(callback)
+            assert callback(None, 0.0) == 1
+            provider._cancelled.set()
+            assert callback(None, 0.0) == 0
+            provider._cancelled.clear()
             return Audio()
 
     monkeypatch.setattr(LocalProvider, "_tts_engine", classmethod(lambda _cls, _language: Engine()))
-    provider = _provider()
     wav_data = provider.synthesize_wav(
         "I spy with my little eye, something that is red.",
         language="en",

@@ -65,7 +65,7 @@ Deterministic allowlist + stability + colour + hints + aliases
 Pinned sherpa-onnx English/Dutch speech → Reachy speaker
 ```
 
-The local path replaces only provider inference, not the safety state machine:
+The local path replaces both cloud vision and cloud speech synthesis backends, not the safety state machine:
 
 - ONNX object detection executes on the daemon host;
 - object classes are restricted to an explicit child-safe allowlist;
@@ -76,7 +76,7 @@ The local path replaces only provider inference, not the safety state machine:
 - voice archives are installed atomically after path-traversal and size checks;
 - model engines are cached in memory after their first load.
 
-Local mode is implemented and hardware-exercised on Wireless, but the redesigned wheel remains delisted until clean Lite and Wireless installation plus supervised physical motion/audio acceptance are complete.
+Version `0.2.0` local mode is clean-install validated and physically accepted on Wireless. The redesigned Lite-host profile remains explicitly marked as awaiting same-version physical acceptance.
 
 ## Origin and related project
 

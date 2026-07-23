@@ -36,9 +36,11 @@ def test_reachy_settings_present_standalone_provider_and_compute_profiles() -> N
     api = (ROOT / "reachy_mini_i_spy" / "main.py").read_text()
     assert "Standalone vision settings" in page
     assert "OpenAI API key" in page
-    assert "provider broker" in page
+    assert "Local ONNX" in page
     assert "connected Mac/PC" in script
     assert "onboard CM4" in script
+    assert "http://127.0.0.1:8042" in api
+    assert "http://0.0.0.0:8042" not in api
     assert "broker URL" not in page
     assert "Scoped broker token" not in page
     combined = page + script + api

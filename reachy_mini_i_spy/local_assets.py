@@ -25,6 +25,7 @@ class VoiceAsset:
     sha256: str
     directory: str
     model: str
+    download_bytes: int = 0
 
 
 VOICE_ASSETS = {
@@ -37,6 +38,7 @@ VOICE_ASSETS = {
         sha256="24dc3bd77dd48c291e52c297878d3437c9492f245d823d7f6a06c4bbb67f4b6b",
         directory="vits-piper-en_US-ljspeech-medium-int8",
         model="en_US-ljspeech-medium.onnx",
+        download_bytes=21_090_429,
     ),
     "nl": VoiceAsset(
         language="nl",
@@ -47,6 +49,7 @@ VOICE_ASSETS = {
         sha256="5cf6ae08ab9339455433f1718896b403622a1bdd9f911f1189421d0df34d83f3",
         directory="vits-piper-nl_BE-nathalie-x_low-int8",
         model="nl_BE-nathalie-x_low.onnx",
+        download_bytes=13_392_995,
     ),
 }
 
@@ -104,7 +107,7 @@ def local_assets_status() -> dict[str, object]:
         "detector_verified": detector_verified,
         "voices": voices,
         "ready": detector_verified and all(voices.values()),
-        "download_bytes": 34_483_424,
+        "download_bytes": sum(asset.download_bytes for asset in VOICE_ASSETS.values() if not voices[asset.language]),
     }
 
 
