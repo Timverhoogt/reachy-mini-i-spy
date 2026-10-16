@@ -33,6 +33,8 @@ acceptance does not transfer to this candidate. Lite-host acceptance is separate
       otherwise Dutch speech.
 - [ ] A wrong meaningful guess uses one attempt and gets a useful new hint;
       exactly the third meaningful wrong guess reveals the fixed object.
+- [ ] Neither a wrong guess nor a detector miss triggers another capture, re-aim
+      or automatic selection restart; an explicit new round is required to re-scan.
 - [ ] Hint requests do not consume attempts or trigger a camera re-check; hints
       and the colour reminder do not repeat. Exhausted explicit hints reveal.
 - [ ] Give-up / don't-know reveals immediately, without another scan.

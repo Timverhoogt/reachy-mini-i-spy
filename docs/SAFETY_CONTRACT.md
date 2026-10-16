@@ -7,6 +7,9 @@ This document is normative for the standalone Reachy Mini I Spy app. UI text and
 - Every session starts with camera access disabled.
 - The user must explicitly opt in for each start.
 - Capture is limited to three transient JPEG viewpoints during a bounded search.
+- Guesses never capture another frame, re-aim at the object, or automatically
+  restart selection. The game refers to its retained observation, not live tracking;
+  selecting a new object requires an explicit new-round request.
 - Stop, reveal, error, shutdown, or consent revocation invalidates the active generation and disables camera use.
 - Late provider, motion, speech, or selection results from an invalid generation are discarded.
 - Frames are held in memory only and cleared after target selection or failure.
@@ -41,8 +44,9 @@ The executable source of these invariants is `reachy_mini_i_spy/game.py::validat
 - Only definite cloud moderation refusal permits trying another validated candidate.
   Malformed/missing verdicts and unavailable moderation fail closed.
 - Retain one fixed target during guessing. Three meaningful judged guesses are the
-  maximum. Hint/help and explicit give-up/don't-know requests do not spend attempts
-  or initiate a camera re-check. Repeated hints/colour reminders are suppressed.
+  maximum. No guess or command initiates a camera re-check. Hint/help and explicit
+  give-up/don't-know requests do not spend attempts. Repeated hints/colour reminders
+  are suppressed.
 - A failed judge operation may return only a deterministic policy-checked retry
   without spending an attempt; never return its unapproved output or rejected input.
 - Terminal cleanup retains its own admission barrier: old work loses authority,

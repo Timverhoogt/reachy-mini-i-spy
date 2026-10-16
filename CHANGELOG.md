@@ -18,6 +18,9 @@ All notable changes to this project are documented here.
   `knives`, and Dutch `telefoon`/`mensen`, now fail the deterministic object filter.
 - Stop invalidates old status, Start, guess and browser-recognition callbacks in the UI.
 - Lost connections show unknown camera status instead of retaining a live animation.
+- Ordinary guesses no longer re-aim/capture or automatically replace the target
+  after a noisy periodic presence check. All three guesses use the exact retained
+  object, and the advertised three-frame search bound applies to the whole round.
 
 ### Gameplay changes
 
