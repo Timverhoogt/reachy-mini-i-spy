@@ -66,7 +66,7 @@ def client(opener: Opener) -> ProviderClient:
 
 
 def test_client_uses_fixed_openai_endpoint_model_and_authorization_header() -> None:
-    opener = Opener([completion(safe_candidate()), moderation()])
+    opener = Opener([completion({"candidates": [safe_candidate()]}), moderation()])
     target = client(opener).select_target([b"jpeg"], language="en", age_band="7-9")
     assert target.object_name == "chair"
     request, timeout = opener.requests[0]

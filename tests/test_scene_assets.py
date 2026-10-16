@@ -26,6 +26,6 @@ def test_scene_adapter_is_view_only_and_does_not_read_private_game_text() -> Non
     for forbidden in ("fetch(", "localStorage", "sessionStorage", "game.target", "game.message", "game.guess"):
         assert forbidden not in adapter
     html = (STATIC / "index.html").read_text()
-    assert html.index("/static/scene.js?v=1") < html.index("/static/ispy-scene.js?v=1")
-    assert html.index("/static/ispy-scene.js?v=1") < html.index("/static/main.js?v=1")
+    assert html.index("/static/scene.js?v=2") < html.index("/static/ispy-scene.js?v=2")
+    assert html.index("/static/ispy-scene.js?v=2") < html.index("/static/main.js?v=2")
     assert 'id="game-scene"' in html

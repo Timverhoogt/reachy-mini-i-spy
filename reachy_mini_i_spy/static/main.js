@@ -53,8 +53,11 @@ function controls() {
   const guessing = !offline && !busy && !stopping && currentState === "guessing";
   $("guess").disabled = !guessing;
   $("send").disabled = !guessing;
+  $("hint").disabled = !guessing;
+  $("give-up").disabled = !guessing;
   $("mic").disabled = !guessing || !("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
-  $("start").disabled = offline || busy || stopping || ["searching", "selecting", "guessing"].includes(currentState);
+  $("start").disabled = offline || busy || stopping || currentGame.cleanup_pending === true
+    || ["searching", "selecting", "guessing"].includes(currentState);
   $("start").textContent = currentState === "reveal" ? "Play another round" : "Start / next round";
   // Stop deliberately remains reachable during reads, writes, errors and disconnection.
 }
@@ -85,6 +88,14 @@ function render(game) {
   offline = false;
   $("state").textContent = game.state.replaceAll("_", " ");
   $("message").textContent = game.message || "";
+  const dutch = game.language === "nl";
+  $("hint").textContent = dutch ? "Een hint" : "Hint";
+  $("give-up").textContent = dutch ? "Ik geef op" : "I give up";
+  const count = Number.isInteger(game.guess_count) && game.guess_count >= 0 && game.guess_count <= 3
+    ? String(game.guess_count) : "—";
+  $("attempts").textContent = dutch
+    ? `Pogingen: ${count} / 3. Een hint kost geen poging.`
+    : `Guesses: ${count} / 3. Hints do not use a guess.`;
   const active = game.camera_active === true;
   $("camera-badge").textContent = active ? "● Camera allowed" : "Camera off";
   $("camera-badge").className = `badge ${active ? "on" : "off"}`;
@@ -188,6 +199,12 @@ $("guess-form").addEventListener("submit", (event) => {
   $("guess").value = "";
   void gameWrite("/api/game/guess", { text });
 });
+
+for (const [id, en, nl] of [["hint", "hint", "een hint"], ["give-up", "I give up", "ik geef op"]]) {
+  $(id).addEventListener("click", () => {
+    if (!$(id).disabled) void gameWrite("/api/game/guess", { text: currentGame.language === "nl" ? nl : en });
+  });
+}
 
 $("settings-form").addEventListener("submit", async (event) => {
   event.preventDefault();

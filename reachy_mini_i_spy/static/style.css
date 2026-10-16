@@ -26,6 +26,8 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .consent input { min-height: 24px; width: 24px; margin-top: .15rem; }
 .consent small { display: block; color: #b4bfd3; font-weight: 450; margin-top: .3rem; }
 .actions { margin-bottom: 1.2rem; }
+.round-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-top: 1rem; }
+.round-actions button { overflow-wrap: anywhere; }
 .guess-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; }
 small, .muted { color: #b4bfd3; }
 #speech-note { margin-top: .35rem; display: block; }

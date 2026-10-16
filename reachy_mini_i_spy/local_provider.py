@@ -18,7 +18,7 @@ from PIL import Image
 if TYPE_CHECKING:
     import sherpa_onnx
 
-from .game import DISALLOWED_TERMS, AgeBand, Language, Target, validate_target
+from .game import AgeBand, Language, Target, _contains_disallowed, candidate_order, validate_target
 from .local_assets import VOICE_ASSETS, detector_path, local_assets_status, voice_path
 
 
@@ -266,17 +266,19 @@ class LocalProvider:
         text = " ".join(text.split())
         if not text or len(text) > 500 or any(ord(character) < 32 for character in text):
             raise RuntimeError("Text is outside accepted bounds")
-        words = set(re.findall(r"[\wÀ-ÿ]+", text.casefold()))
-        if words & DISALLOWED_TERMS:
+        if _contains_disallowed(text):
             raise RuntimeError("Content was not approved by local policy")
 
-    def select_target(self, frames_jpeg: list[bytes], *, language: Language, age_band: AgeBand) -> Target:
+    def select_target(self, frames_jpeg: list[bytes], *, language: Language, age_band: AgeBand,
+                      recent_keys: tuple[str, ...] = ()) -> Target:
         del age_band
+        self._check_current()
         if not 1 <= len(frames_jpeg) <= 3:
             raise RuntimeError("Camera frame bounds were not met")
         images: list[Image.Image] = []
         by_label: dict[int, list[Detection]] = {}
         for frame_index, frame in enumerate(frames_jpeg):
+            self._check_current()
             image, detections = self._detect(frame, frame_index)
             images.append(image)
             per_frame: dict[int, list[Detection]] = {}
@@ -294,32 +296,43 @@ class LocalProvider:
         ]
         if not candidates:
             raise RuntimeError("No stable child-safe local target was found")
-        label, matches = max(candidates, key=lambda item: (len(item[1]), sum(match.score for match in item[1])))
-        selected = max(matches, key=lambda match: match.score)
-        info = OBJECTS[label]
-        colour = self._colour(images[selected.frame_index], selected.bbox)
-        location_en = self._location(selected.bbox, "en")
-        payload: dict[str, object] = {
-            "object_name": info.en,
-            "colour": colour,
-            "category": info.category,
-            "location": location_en,
-            "frame_index": selected.frame_index,
-            "bbox": list(selected.bbox),
-            "confidence": selected.score,
-            "stable": True,
-            "visible_frame_count": len(matches),
-            "hints_en": [info.hint_en, f"It is {location_en}."],
-            "hints_nl": [info.hint_nl, f"Het is {self._location(selected.bbox, 'nl')}."],
-        }
-        target = validate_target(payload, frame_count=len(frames_jpeg), minimum_confidence=self.SCORE_THRESHOLD)
-        self.moderate(" ".join((target.object_name, target.category, target.location, *target.hints_en, *target.hints_nl)))
-        return target
+        targets = []
+        try:
+            for label, matches in candidates:
+                self._check_current()
+                if label not in OBJECTS:
+                    continue
+                selected = max(matches, key=lambda match: match.score)
+                info = OBJECTS[label]
+                location_en = self._location(selected.bbox, "en")
+                try:
+                    payload: dict[str, object] = {
+                        "object_name": info.nl if language == "nl" else info.en,
+                        "colour": self._colour(images[selected.frame_index], selected.bbox),
+                        "category": info.category, "location": self._location(selected.bbox, language),
+                        "frame_index": selected.frame_index, "bbox": list(selected.bbox),
+                        "confidence": selected.score, "stable": True, "visible_frame_count": len(matches),
+                        "hints_en": [info.hint_en, f"It is {location_en}."],
+                        "hints_nl": [info.hint_nl, f"Het is {self._location(selected.bbox, 'nl')}."],
+                    }
+                    target = validate_target(payload, frame_count=len(frames_jpeg), minimum_confidence=self.SCORE_THRESHOLD)
+                    self.moderate(" ".join((target.object_name, target.category, target.location,
+                                            *target.hints_en, *target.hints_nl)))
+                except (ValueError, RuntimeError):
+                    continue
+                targets.append(target)
+        finally:
+            images.clear()
+        self._check_current()
+        ordered = candidate_order(targets, recent=recent_keys)
+        if not ordered:
+            raise RuntimeError("No stable child-safe local target was found")
+        return ordered[0]
 
     @staticmethod
     def _label_for_target(target: Target) -> int | None:
         normalized = target.object_name.casefold()
-        return next((label for label, info in OBJECTS.items() if info.en.casefold() == normalized), None)
+        return next((label for label, info in OBJECTS.items() if normalized in {info.en.casefold(), info.nl.casefold()}), None)
 
     def target_present(self, frame_jpeg: bytes, target: Target) -> bool:
         label = self._label_for_target(target)

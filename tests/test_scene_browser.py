@@ -223,7 +223,7 @@ def test_layout_controls_and_scene_screenshots(ui, width, height):
     state["game"] = game("guessing", 1)
     refresh(page)
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-    for selector in ["#guess", "#send", "#stop"]:
+    for selector in ["#guess", "#send", "#hint", "#give-up", "#stop"]:
         element = page.locator(selector)
         element.scroll_into_view_if_needed()
         box = element.bounding_box()
@@ -299,6 +299,41 @@ def test_html_error_has_safe_feedback(ui):
     page.locator("#start").click()
     expect(page.locator("#toast")).to_have_text("The app could not complete the request.")
     expect(page.locator("#camera-badge")).to_have_text("Camera unconfirmed")
+
+
+@pytest.mark.parametrize("language,hint,give_up", [("en", "hint", "I give up"), ("nl", "een hint", "ik geef op")])
+def test_hint_give_up_and_typed_guess_use_same_moderated_route(ui, language, hint, give_up):
+    page, state = ui
+    state["game"] = game("guessing", 1, language=language, guess_count=1)
+    refresh(page)
+    requests = []
+
+    def answer(route):
+        requests.append(route.request.post_data_json)
+        route.fulfill(json={"game": state["game"]})
+
+    page.route("**/api/game/guess", answer)
+    for selector, text in [("#hint", hint), ("#give-up", give_up)]:
+        with page.expect_response("**/api/game/guess"):
+            page.locator(selector).click()
+        expect(page.locator(selector)).to_be_enabled()
+        assert requests[-1] == {"text": text}
+    page.locator("#guess").fill("chair")
+    with page.expect_response("**/api/game/guess"):
+        page.locator("#guess").press("Enter")
+    assert requests[-1] == {"text": "chair"}
+    expect(page.locator("#attempts")).to_contain_text("1 / 3")
+
+
+def test_next_round_waits_for_confirmed_cleanup(ui):
+    page, state = ui
+    state["game"] = game("reveal", 2, cleanup_pending=True)
+    refresh(page)
+    expect(page.locator("#start")).to_be_disabled()
+    expect(page.locator("#stop")).to_be_enabled()
+    state["game"]["cleanup_pending"] = False
+    refresh(page)
+    expect(page.locator("#start")).to_be_enabled()
 
 
 @pytest.mark.parametrize("value", ["searching", "selecting", "reveal", "error"])

@@ -82,11 +82,21 @@ See the normative [safety contract](docs/SAFETY_CONTRACT.md) and [architecture](
 
 ## Development
 
-The current source candidate adds the illustrated Homebody I Spy scene without a
-Homebody/Hermes runtime dependency. It also rejects plural and multi-word forbidden
-object names. It is **not** a published or physically accepted replacement for
-`0.2.0`. See the [Homebody comparison and follow-up priorities](docs/HOMEBODY_PARITY.md)
-and [vendored scene provenance](docs/VENDORED_SCENES.md).
+The `0.3.0` candidate adds Homebody's illustrated I Spy scene without a Homebody
+runtime dependency, plus three meaningful guesses, explicit EN/NL hint and
+give-up handling, Hint / I give up buttons, and randomized validated object choices
+in both cloud and local modes. Hints do not spend guesses; a failed judge check
+asks for a retry without consuming an attempt. Dutch local reveals use Dutch
+object names. The last three target-name keys are kept in RAM only to prefer
+alternatives, and cleared on Stop/error; a sole safe object may still repeat.
+
+The app still uses its independent OpenAI/offline providers. See the
+[Homebody comparison](docs/HOMEBODY_PARITY.md) and
+[vendored scene provenance](docs/VENDORED_SCENES.md).
+
+**Release gate:** this candidate has no same-artifact supervised robot acceptance.
+`0.2.0` remains the latest physically accepted published version. Source checks,
+review and a draft release do not transfer that acceptance to `0.3.0`.
 
 ```sh
 uv sync --extra dev

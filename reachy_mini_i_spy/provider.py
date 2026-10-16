@@ -17,9 +17,18 @@ import threading
 import urllib.error
 import urllib.request
 from collections.abc import Callable
+from copy import deepcopy
 
 from .config import AppConfig
-from .game import DISALLOWED_TERMS, AgeBand, Language, Target, validate_target
+from .game import (
+    DISALLOWED_TERMS,
+    MAX_CANDIDATES,
+    AgeBand,
+    Language,
+    Target,
+    candidate_order,
+    validate_candidate_pool,
+)
 
 _LOGGER = logging.getLogger(__name__)
 VISION_MODEL = "gpt-4.1-mini"
@@ -63,8 +72,21 @@ TARGET_RESPONSE_SCHEMA: dict[str, object] = {
 }
 
 
+TARGET_POOL_SCHEMA = {
+    "type": "object", "additionalProperties": False,
+    "properties": {"candidates": {
+        "type": "array", "minItems": 1, "maxItems": MAX_CANDIDATES, "items": TARGET_RESPONSE_SCHEMA,
+    }},
+    "required": ["candidates"],
+}
+
+
 class ProviderError(RuntimeError):
     """A sanitized, fail-closed provider error."""
+
+
+class ContentRejected(ProviderError):
+    """A definite moderation refusal, not a transport or malformed-verdict error."""
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -177,7 +199,7 @@ class ProviderClient:
             assert isinstance(choices, list) and len(choices) == 1
             message = choices[0]["message"]  # type: ignore[index]
             content = message["content"]  # type: ignore[index]
-            assert isinstance(content, str) and len(content) <= 4000
+            assert isinstance(content, str) and len(content) <= 16000
             result = json.loads(content)
             assert isinstance(result, dict)
             return result
@@ -225,6 +247,9 @@ class ProviderClient:
             return
         text = self._validate_text(text, maximum=500)
         results = self._json("moderations", {"model": MODERATION_MODEL, "input": text}).get("results")
+        if (isinstance(results, list) and len(results) == 1 and isinstance(results[0], dict)
+                and results[0].get("flagged") is True):
+            raise ContentRejected("Content was not approved by moderation")
         if not (
             isinstance(results, list)
             and len(results) == 1
@@ -233,19 +258,28 @@ class ProviderClient:
         ):
             raise ProviderError("Content was not approved by moderation")
 
-    def select_target(self, frames_jpeg: list[bytes], *, language: Language, age_band: AgeBand) -> Target:
+    def select_target(self, frames_jpeg: list[bytes], *, language: Language, age_band: AgeBand,
+                      recent_keys: tuple[str, ...] = ()) -> Target:
+        self._check_current()
         if self._local is not None:
             try:
-                return self._local.select_target(frames_jpeg, language=language, age_band=age_band)
+                target = self._local.select_target(
+                    frames_jpeg, language=language, age_band=age_band, recent_keys=recent_keys,
+                )
             except RuntimeError as exc:
                 raise ProviderError(str(exc)) from exc
+            self._check_current()
+            return target
         if not 1 <= len(frames_jpeg) <= 3 or any(not frame or len(frame) > 1_500_000 for frame in frames_jpeg):
             raise ProviderError("Camera frame bounds were not met")
         forbidden = ", ".join(sorted(DISALLOWED_TERMS))
         prompt = (
-            "Select exactly one fixed child-safe household object visible clearly and consistently in at least two supplied frames. "
+            "Propose 1-4 distinct child-safe household objects visible clearly and consistently in the supplied frames. "
+            "Never invent an object to fill the pool. "
             "Never select a person, face, body, clothing, screen, document, medicine, weapon, private/sensitive, reflective, tiny, or unstable item. "
-            "Return strict JSON with exactly these fields: object_name, colour, category, location, frame_index, bbox, confidence, stable, visible_frame_count, hints_en, hints_nl. "
+            "Return strict JSON with only candidates: an array. Each candidate has exactly these fields: "
+            "object_name, colour, category, location, frame_index, bbox, confidence, stable, visible_frame_count, hints_en, hints_nl. "
+            f"object_name MUST be in {'Dutch' if language == 'nl' else 'English'}, because it is spoken verbatim at reveal. "
             "colour must be exactly one of red, orange, yellow, green, blue, purple, pink, brown, black, white, grey. "
             "Set stable=true, visible_frame_count between 2 and the number of supplied frames, and confidence between 0.78 and 1.0. "
             "bbox must be normalized [x,y,width,height], fully inside the image, with width and height at least 0.12 and area between 0.025 and 0.65. "
@@ -262,26 +296,29 @@ class ProviderClient:
             }
             for frame in frames_jpeg
         )
-        result = self._vision_json(content, 500, schema=TARGET_RESPONSE_SCHEMA)
-        if set(result) != _TARGET_FIELDS:
-            raise ProviderError("Provider returned an invalid target shape")
-        try:
-            target = validate_target(result, frame_count=len(frames_jpeg))
-        except (TypeError, ValueError) as exc:
-            _LOGGER.warning("I Spy provider candidate failed app policy (%s)", type(exc).__name__)
-            raise ProviderError("Provider candidate failed app policy") from exc
-        self.moderate(
-            " ".join(
-                (
-                    target.object_name,
-                    target.category,
-                    target.location,
-                    *target.hints_en,
-                    *target.hints_nl,
-                )
-            )
+        schema = deepcopy(TARGET_POOL_SCHEMA)
+        schema["properties"]["candidates"]["items"]["properties"]["object_name"]["description"] = (
+            f"The generic object name in {'Dutch' if language == 'nl' else 'English'}; spoken verbatim at reveal."
         )
-        return target
+        try:
+            result = self._vision_json(content, 2400, schema=schema)
+        finally:
+            content.clear()
+        self._check_current()
+        try:
+            targets = validate_candidate_pool(result, frame_count=len(frames_jpeg))
+        except (TypeError, ValueError) as exc:
+            raise ProviderError("Provider candidate pool failed app policy") from exc
+        for target in candidate_order(targets, recent=recent_keys):
+            self._check_current()
+            try:
+                self.moderate(" ".join((target.object_name, target.category, target.location,
+                                        *target.hints_en, *target.hints_nl)))
+            except ContentRejected:
+                continue
+            self._check_current()
+            return target
+        raise ProviderError("No candidate was approved by moderation")
 
     @staticmethod
     def _target_payload(target: Target) -> dict[str, object]:

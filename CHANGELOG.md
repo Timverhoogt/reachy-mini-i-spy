@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [Unreleased] — 0.3.0 candidate
 
 ### Added
 
@@ -19,8 +19,25 @@ All notable changes to this project are documented here.
 - Stop invalidates old status, Start, guess and browser-recognition callbacks in the UI.
 - Lost connections show unknown camera status instead of retaining a live animation.
 
-This development candidate is `0.2.1.dev0`, not a published or physically accepted release.
-Provider architecture, six-guess gameplay and robot motion/audio lifecycle are unchanged.
+### Gameplay changes
+
+- Three meaningful guesses per round, rather than six.
+- Explicit English/Dutch hint, help, don't-know and give-up commands. Hint requests
+  do not consume an attempt or trigger another camera capture.
+- Deduplicated hints and colour reminders, with an explicit reveal on hint exhaustion.
+- Hint / I give up buttons routed through the same moderated guess endpoint.
+- A validated 1–4 candidate cloud pool with code-side randomization and moderation
+  of the selected candidate; definite content refusals may try another safe candidate,
+  but missing/malformed moderation and transport failures fail closed.
+- Random choice among validated local detections, with the same bounded RAM-only
+  recent-object preference. A sole eligible object may repeat; Stop/error clears history.
+- Judge failures produce only a policy-checked deterministic retry without using an attempt.
+- Dutch local targets retain Dutch names for reveal and bilingual class-based matching.
+- Terminal rounds revoke old work, clear the retained target, and finish verified fold/
+  motor cleanup before a new Start is admitted.
+
+`0.3.0` remains a candidate pending exact-artifact supervised acceptance. No robot
+installation or catalog update is implied by source publication or a draft release.
 
 ## [0.2.0] - 2026-07-23
 

@@ -23,7 +23,7 @@ from scipy.signal import resample_poly
 from scipy.spatial.transform import Rotation
 
 from .config import load_config
-from .game import AgeBand, GameMachine, GameState, Language
+from .game import MAX_GUESSES, AgeBand, GameMachine, GameState, Language, guess_intent
 from .provider import ProviderClient, ProviderError
 
 _LOGGER = logging.getLogger(__name__)
@@ -525,7 +525,7 @@ class MotionOwner:
 class GameRuntime:
     """Serializes all robot I/O and rejects results from replaced sessions."""
 
-    MAX_GUESSES = 6
+    MAX_GUESSES = MAX_GUESSES
     LOCAL_COMPLETION_TIMEOUT_SECONDS = 0.1
 
     def __init__(self, robot: Robot, stop_event: threading.Event) -> None:
@@ -576,7 +576,8 @@ class GameRuntime:
         self._pending_cleanup_epoch: int | None = None
 
     def snapshot(self) -> dict[str, object]:
-        return {**self.machine.snapshot(), **self.motion.status(), "runtime_ready": self._ready.is_set()}
+        return {**self.machine.snapshot(), **self.motion.status(), "runtime_ready": self._ready.is_set(),
+                "cleanup_pending": self._cleanup_pending()}
 
     def _is_current(self, generation: int) -> bool:
         return (
@@ -1167,6 +1168,10 @@ class GameRuntime:
                         self.motion.fold_and_disable()
                         self._ack_cleanup(self._epoch)
                 except Exception as exc:
+                    if not self._is_current(event.generation):
+                        # Stop/replacement is expected cancellation. Pending physical
+                        # cleanup remains owned by the ordinary cleanup barrier.
+                        continue
                     if isinstance(exc, PrivacySafeRuntimeError):
                         diagnostic_code = exc.diagnostic_code
                     elif isinstance(exc, ProviderError) and load_config().provider == "local":
@@ -1299,16 +1304,17 @@ class GameRuntime:
         frames = self.motion.search(generation)
         if not frames or not self.machine.transition(GameState.SELECTING, generation, "Choosing…"):
             return
-        target = self._call_if_current(
-            generation,
-            lambda: provider.select_target(
-                frames,
-                language=self.machine.language,
-                age_band=self.machine.age_band,
-            ),
-        )
-        # Drop all frame references before any speech or waiting for guesses.
-        frames.clear()
+        try:
+            target = self._call_if_current(
+                generation,
+                lambda: provider.select_target(
+                    frames, language=self.machine.language, age_band=self.machine.age_band,
+                    recent_keys=self.machine.recent_keys(),
+                ),
+            )
+        finally:
+            # Failure and cancellation must discard retained frames too.
+            frames.clear()
         if target is None or not self._is_current(generation) or not self.machine.select(target, generation):
             return
         self.motion.neutral(generation)
@@ -1317,14 +1323,41 @@ class GameRuntime:
     def _handle_guess(self, event: GameEvent) -> None:
         if not self._is_current(event.generation):
             return
-        guess = self.machine.record_guess_if_current(event.generation)
-        if guess is None:
+        target = self.machine.current_target(event.generation)
+        if target is None:
             return
-        count, target = guess
         provider = self._provider(event.generation)
         if provider is None:
             return
-        if count % 2 == 0:
+        intent = guess_intent(event.value)
+        matched = False
+        if intent == "guess":
+            try:
+                matched = self._call_if_current(
+                    event.generation,
+                    lambda: provider.judge_guess(event.value, target, language=self.machine.language),
+                )
+                if matched is None:
+                    return
+                if type(matched) is not bool:
+                    raise ProviderError("Guess result was invalid")
+            except ProviderError:
+                with self._ownership_lock:
+                    if (not self._is_current(event.generation)
+                            or self.machine.current_target(event.generation) is not target):
+                        return
+                    retry = ("I couldn't check that guess. Please try again." if self.machine.language == "en"
+                             else "Ik kon die gok niet controleren. Probeer het nog eens.")
+                    self.machine.message = retry
+                # The deterministic retry still passes the normal final speech policy.
+                self._speak(provider, retry, event.generation)
+                return
+        else:
+            if self._call_if_current(event.generation, lambda: (provider.moderate(event.value), True)[1]) is not True:
+                return
+        if not self._is_current(event.generation):
+            return
+        if intent == "guess" and (self.machine.guess_count + 1) % 2 == 0:
             frame = self.motion.capture_target(target.frame_index, event.generation)
             present = (
                 None
@@ -1348,43 +1381,33 @@ class GameRuntime:
                     if new_generation is not None:
                         self._replace_pending(GameEvent("start", new_generation))
                 return
-        matched = self._call_if_current(
-            event.generation,
-            lambda: provider.judge_guess(
-                event.value,
-                target,
-                language=self.machine.language,
-            ),
-        )
-        if matched is None:
+        with self._ownership_lock:
+            if not self._is_current(event.generation):
+                return
+            reply = self.machine.reply_if_current(event.generation, intent=intent, matched=matched)
+        if reply is None:
             return
-        if not self._is_current(event.generation):
-            return
-        if matched:
-            self.machine.transition(
-                GameState.REVEAL,
-                event.generation,
-                (f"Yes! It was the {target.object_name}." if self.machine.language == "en"
-                 else f"Ja! Het was de {target.object_name}."),
-            )
-        elif count >= self.MAX_GUESSES:
-            self.machine.transition(
-                GameState.REVEAL,
-                event.generation,
-                (f"Good trying! It was the {target.object_name}." if self.machine.language == "en"
-                 else f"Goed geprobeerd! Het was de {target.object_name}."),
-            )
-        else:
-            with self._ownership_lock:
-                if not self._is_current(event.generation):
-                    return
-                hint = self.machine.next_hint()
-                self.machine.message = (
-                    f"Nice guess. Here is a hint: {hint}"
-                    if self.machine.language == "en"
-                    else f"Goede gok. Hier is een hint: {hint}"
-                )
-        self._speak(provider, self.machine.message, event.generation)
+        message, terminal = reply
+        self._speak(provider, message, event.generation)
+        if terminal:
+            self._finish_round(event.generation)
+
+    def _finish_round(self, generation: int) -> None:
+        """Revoke round authority and serialize physical cleanup against a new Start."""
+        with self._ownership_lock:
+            if not self._is_current(generation) or not self.machine.finish_if_current(generation):
+                return
+            self._epoch += 1
+            cleanup_epoch = self._epoch
+            for lease in self._active_leases.values():
+                if lease.revoked is not None:
+                    lease.revoked.set()
+            providers = self._revoke_providers_locked()
+            self.motion.revoke_outputs()
+            self._request_cleanup(cleanup_epoch)
+        self._cancel_local_providers(providers)
+        self.motion.fold_and_disable()
+        self._ack_cleanup(cleanup_epoch)
 
     def _speak(self, provider: ProviderClient, text: str, generation: int) -> None:
         if not self._is_current(generation):
