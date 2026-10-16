@@ -46,6 +46,8 @@ The `0.3.0` candidate implements the recommended EN/NL gameplay follow-up:
 
 - Only judged guesses spend an attempt. Hint/help and give-up/don't-know commands
   take the same moderated input route without invoking a judge or capturing a frame.
+- Ordinary guesses also use only the retained target: no periodic re-aim, extra
+  capture, or automatic selection restart can interrupt the three-guess round.
 - Hints are deduplicated across case, whitespace and punctuation; the colour reminder
   is not repeated if already given. Explicit exhausted-hint requests reveal the answer.
 - Failed judge checks use only deterministic policy-checked retry copy and spend no
@@ -56,7 +58,7 @@ The `0.3.0` candidate implements the recommended EN/NL gameplay follow-up:
   same recent-key preference without cloud inference or lower confidence thresholds.
 - Recent generic name keys are RAM-only, bounded to three and cleared on Stop/error.
   One eligible object may repeat, and changing language can change its name key.
-- Local Dutch targets retain Dutch names while presence/guess matching still resolves
+- Local Dutch targets retain Dutch names while guess matching still resolves
   the same safe detector class. Cloud prompt and per-request schema require the selected
   language for `object_name`; automated wire checks do not prove model compliance.
 - Completed rounds retain no active target and use the existing verified fold/torque

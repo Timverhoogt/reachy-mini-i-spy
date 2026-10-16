@@ -1357,30 +1357,10 @@ class GameRuntime:
                 return
         if not self._is_current(event.generation):
             return
-        if intent == "guess" and (self.machine.guess_count + 1) % 2 == 0:
-            frame = self.motion.capture_target(target.frame_index, event.generation)
-            present = (
-                None
-                if frame is None
-                else self._call_if_current(
-                    event.generation,
-                    lambda: provider.target_present(frame, target),
-                )
-            )
-            if present is None:
-                return
-            if not present:
-                escaped = (
-                    "That object escaped. I'll choose another one."
-                    if self.machine.language == "en"
-                    else "Dat voorwerp is ontsnapt. Ik kies een nieuwe."
-                )
-                self._speak(provider, escaped, event.generation)
-                with self._ownership_lock:
-                    new_generation = self.machine.restart_if_current(event.generation)
-                    if new_generation is not None:
-                        self._replace_pending(GameEvent("start", new_generation))
-                return
+        # The validated object is the round's fixed target. Ordinary guesses
+        # must not capture more frames or restart selection on a noisy detector
+        # miss; this also keeps the advertised three-frame capture bound true.
+        # Only an explicit new-round request may select another object.
         with self._ownership_lock:
             if not self._is_current(event.generation):
                 return

@@ -60,7 +60,7 @@ def test_runtime_three_guesses_reveal_clear_target_and_fold(monkeypatch, languag
     runtime, gen, target, provider, spoken, captures = active_runtime(monkeypatch, language)
     for _ in range(3):
         runtime._handle_guess(GameEvent("guess", gen, "table"))
-    assert len(captures) == 1  # only second meaningful guess
+    assert captures == []  # guessing never captures or restarts the round
     assert provider.calls.count("judge") == 3
     assert runtime.machine.guess_count == 3
     assert runtime.machine.state == GameState.REVEAL
