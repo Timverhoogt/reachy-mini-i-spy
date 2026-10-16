@@ -1,5 +1,13 @@
 # Release provenance
 
+## Candidate artifact (`0.3.0`)
+
+No same-artifact supervised physical acceptance is recorded yet. This candidate
+changes hint/give-up handling, guess count, target selection and final-round
+cleanup. Historical acceptance below does not transfer. Keep the GitHub release
+a draft and the catalog on `0.2.0` until the exact candidate wheel has passed the
+supervised acceptance checklist in `RELEASE_ACCEPTANCE.md`.
+
 ## Current accepted artifact (`0.2.0`)
 
 The exact `0.2.0` wheel attached to the GitHub release completed supervised physical acceptance on Reachy Mini Wireless (CM4). Its SHA-256 is published in the release's separate `SHA256SUMS.txt` asset so the artifact is built from the final committed source without embedding a self-referential digest in wheel metadata.

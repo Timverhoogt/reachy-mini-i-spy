@@ -30,6 +30,24 @@ Provider JSON is untrusted. Malformed, missing, ambiguous, or out-of-range value
 
 The executable source of these invariants is `reachy_mini_i_spy/game.py::validate_target`, backed by negative and adversarial tests.
 
+## Bounded choice and round policy
+
+- Cloud vision proposes a strict pool of one to four candidates; local mode uses
+  only the fixed detector allowlist. Validate the full admitted pool before
+  de-duplication, randomization or selection; never truncate an oversized model pool.
+- Randomize in code among eligible candidates, preferring alternatives to the last
+  three generic target-name keys. Keys are RAM-only, not exposed in status and
+  cleared on Stop/error. One safe candidate may repeat; language changes can alter keys.
+- Only definite cloud moderation refusal permits trying another validated candidate.
+  Malformed/missing verdicts and unavailable moderation fail closed.
+- Retain one fixed target during guessing. Three meaningful judged guesses are the
+  maximum. Hint/help and explicit give-up/don't-know requests do not spend attempts
+  or initiate a camera re-check. Repeated hints/colour reminders are suppressed.
+- A failed judge operation may return only a deterministic policy-checked retry
+  without spending an attempt; never return its unapproved output or rejected input.
+- Terminal cleanup retains its own admission barrier: old work loses authority,
+  the target is cleared, and verified fold/torque cleanup must complete before Start.
+
 ## Motion and embodied safety
 
 - Search motion is software-bounded and owned by one cancellable motion controller.

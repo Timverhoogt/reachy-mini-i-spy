@@ -21,14 +21,30 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install Reachy SDK native build requirements
-        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libgirepository1.0-dev pkg-config
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libgirepository1.0-dev pkg-config gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0
       - name: Install project
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra browser
       - name: Test
-        run: uv run pytest -q
+        run: uv run pytest -q --ignore=tests/test_scene_browser.py --junitxml=.artifacts/unit.xml
+      - name: Install Chromium
+        run: uv run playwright install --with-deps chromium
+      - name: Browser animation and lifecycle checks (no robot or providers)
+        run: ISPY_BROWSER_TESTS=1 uv run pytest -q tests/test_scene_browser.py --junitxml=.artifacts/browser.xml
       - name: Lint
         run: uv run ruff check .
+      - name: Official Reachy clean-install validator (no robot)
+        run: uv run reachy-mini-app-assistant check .
       - name: Build and inspect package boundary
         run: |
           uv build
           uv run python scripts/check_artifacts.py dist/*
+      - name: Retain verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ispy-verification
+          path: .artifacts/
+          include-hidden-files: true
+          if-no-files-found: error

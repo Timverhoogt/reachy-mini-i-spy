@@ -82,6 +82,22 @@ See the normative [safety contract](docs/SAFETY_CONTRACT.md) and [architecture](
 
 ## Development
 
+The `0.3.0` candidate adds Homebody's illustrated I Spy scene without a Homebody
+runtime dependency, plus three meaningful guesses, explicit EN/NL hint and
+give-up handling, Hint / I give up buttons, and randomized validated object choices
+in both cloud and local modes. Hints do not spend guesses; a failed judge check
+asks for a retry without consuming an attempt. Dutch local reveals use Dutch
+object names. The last three target-name keys are kept in RAM only to prefer
+alternatives, and cleared on Stop/error; a sole safe object may still repeat.
+
+The app still uses its independent OpenAI/offline providers. See the
+[Homebody comparison](docs/HOMEBODY_PARITY.md) and
+[vendored scene provenance](docs/VENDORED_SCENES.md).
+
+**Release gate:** this candidate has no same-artifact supervised robot acceptance.
+`0.2.0` remains the latest physically accepted published version. Source checks,
+review and a draft release do not transfer that acceptance to `0.3.0`.
+
 ```sh
 uv sync --extra dev
 uv run pytest
@@ -90,6 +106,17 @@ uv build
 uv run python scripts/check_artifacts.py dist/*
 reachy-mini-app-assistant check .
 ```
+
+For the hardware-free Chromium animation, layout and Stop/stale-response checks:
+
+```sh
+uv sync --extra dev --extra browser
+uv run playwright install chromium
+ISPY_BROWSER_TESTS=1 uv run pytest tests/test_scene_browser.py
+```
+
+Normal unit runs exclude the optional browser lane with
+`uv run pytest --ignore=tests/test_scene_browser.py`; CI runs both explicitly.
 
 The Reachy SDK includes native Linux dependencies. See CI for the tested Ubuntu setup.
 

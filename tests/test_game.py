@@ -101,3 +101,39 @@ def test_target_is_retained_across_hints_and_hidden_until_reveal() -> None:
 def test_unsafe_or_unclear_targets_fail_closed(changes: dict[str, object]) -> None:
     with pytest.raises(ValueError):
         validate_target(candidate(**changes), frame_count=3)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "phones",
+        "knives",
+        "pills",
+        "screens",
+        "photos",
+        "papers",
+        "credit card",
+        "credit-cards",
+        "credit_card",
+        "telefoon",
+        "telefoons",
+        "mensen",
+        "gezichten",
+        "children",
+        "children's toy",
+        "kinderen",
+        "lichamen",
+        "messen",
+        "bodies",
+        "creditcard",
+        "creditcards",
+    ],
+)
+def test_disallowed_plural_and_phrase_candidates_fail_closed(name: str) -> None:
+    with pytest.raises(ValueError, match="disallowed"):
+        validate_target(candidate(object_name=name), frame_count=3)
+
+
+@pytest.mark.parametrize("name", ["chair", "blue cups", "wooden table", "plant pot", "stool"])
+def test_disallowed_matching_does_not_reject_unrelated_safe_objects(name: str) -> None:
+    assert validate_target(candidate(object_name=name), frame_count=3).object_name == name
