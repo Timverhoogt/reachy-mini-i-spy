@@ -23,9 +23,13 @@ jobs:
       - name: Install Reachy SDK native build requirements
         run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libgirepository1.0-dev pkg-config
       - name: Install project
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra browser
       - name: Test
-        run: uv run pytest -q
+        run: uv run pytest -q --ignore=tests/test_scene_browser.py
+      - name: Install Chromium
+        run: uv run playwright install --with-deps chromium
+      - name: Browser animation and lifecycle checks (no robot or providers)
+        run: ISPY_BROWSER_TESTS=1 uv run pytest -q tests/test_scene_browser.py
       - name: Lint
         run: uv run ruff check .
       - name: Build and inspect package boundary

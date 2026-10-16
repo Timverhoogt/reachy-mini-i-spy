@@ -82,6 +82,12 @@ See the normative [safety contract](docs/SAFETY_CONTRACT.md) and [architecture](
 
 ## Development
 
+The current source candidate adds the illustrated Homebody I Spy scene without a
+Homebody/Hermes runtime dependency. It also rejects plural and multi-word forbidden
+object names. It is **not** a published or physically accepted replacement for
+`0.2.0`. See the [Homebody comparison and follow-up priorities](docs/HOMEBODY_PARITY.md)
+and [vendored scene provenance](docs/VENDORED_SCENES.md).
+
 ```sh
 uv sync --extra dev
 uv run pytest
@@ -90,6 +96,17 @@ uv build
 uv run python scripts/check_artifacts.py dist/*
 reachy-mini-app-assistant check .
 ```
+
+For the hardware-free Chromium animation, layout and Stop/stale-response checks:
+
+```sh
+uv sync --extra dev --extra browser
+uv run playwright install chromium
+ISPY_BROWSER_TESTS=1 uv run pytest tests/test_scene_browser.py
+```
+
+Normal unit runs exclude the optional browser lane with
+`uv run pytest --ignore=tests/test_scene_browser.py`; CI runs both explicitly.
 
 The Reachy SDK includes native Linux dependencies. See CI for the tested Ubuntu setup.
 

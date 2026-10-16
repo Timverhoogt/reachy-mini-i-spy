@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Homebody's illustrated I Spy scene, vendored without a Homebody runtime dependency,
+  with English/Dutch categorical captions and reduced-motion/offscreen/page lifecycle handling.
+- Hardware-free Chromium regressions for animation, Stop, stale replies, speech teardown,
+  connection failure, text safety and phone/desktop control hit-testing.
+- Pinned scene provenance and a source-level comparison with Homebody.
+
+### Fixed
+
+- Plural and multi-word forbidden target names, including `credit card`, `phones`,
+  `knives`, and Dutch `telefoon`/`mensen`, now fail the deterministic object filter.
+- Stop invalidates old status, Start, guess and browser-recognition callbacks in the UI.
+- Lost connections show unknown camera status instead of retaining a live animation.
+
+This development candidate is `0.2.1.dev0`, not a published or physically accepted release.
+Provider architecture, six-guess gameplay and robot motion/audio lifecycle are unchanged.
+
 ## [0.2.0] - 2026-07-23
 
 ### Added

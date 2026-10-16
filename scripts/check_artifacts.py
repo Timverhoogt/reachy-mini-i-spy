@@ -27,6 +27,9 @@ REQUIRED_SUFFIXES = (
     DETECTOR_SUFFIX,
     "reachy_mini_i_spy/models/README.md",
     "reachy_mini_i_spy/models/YOLOX_LICENSE.txt",
+    "reachy_mini_i_spy/static/scene.js",
+    "reachy_mini_i_spy/static/scene.css",
+    "reachy_mini_i_spy/static/ispy-scene.js",
 )
 
 

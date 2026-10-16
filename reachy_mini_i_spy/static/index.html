@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#16233f">
   <title>Reachy Mini I Spy</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/scene.css?v=1">
+  <link rel="stylesheet" href="/static/style.css?v=1">
 </head>
 <body>
   <header>
@@ -19,6 +20,7 @@
   <main>
     <section class="card game-card" aria-labelledby="game-heading">
       <h2 id="game-heading">Game</h2>
+      <div id="game-scene" aria-label="I Spy illustrated game status"></div>
       <p id="state" class="state">Starting app…</p>
       <p id="message" class="message" aria-live="polite">Please wait.</p>
 
@@ -80,6 +82,8 @@
 
   <button id="stop" class="stop" type="button">■ Stop &amp; camera off</button>
   <div id="toast" role="alert" aria-live="assertive"></div>
-  <script src="/static/main.js"></script>
+  <script src="/static/scene.js?v=1"></script>
+  <script src="/static/ispy-scene.js?v=1"></script>
+  <script src="/static/main.js?v=1"></script>
 </body>
 </html>

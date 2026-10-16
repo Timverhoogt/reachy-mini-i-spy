@@ -30,8 +30,14 @@ DISALLOWED_TERMS = {
     "document", "paper", "letter", "photo", "medicine", "pill", "drug", "weapon", "gun",
     "knife", "private", "underwear", "passport", "credit card", "password", "address",
     "gezicht", "persoon", "kind", "lichaam", "kleding", "scherm", "medicijn",
-    "wapen", "mes", "privé",
+    "wapen", "mes", "privé", "telefoon", "mensen", "knives", "children", "kinderen",
+    "lichamen", "messen", "bodies", "creditcard",
 }
+_DISALLOWED_PHRASES = tuple(
+    re.compile(r"\b" + r"[\W_]+".join(map(re.escape, term.split())) + r"(?:s|es|en)?\b")
+    for term in sorted(DISALLOWED_TERMS)
+    if " " in term
+)
 
 
 class GameState(StrEnum):
@@ -73,8 +79,13 @@ def _clean_text(value: object, *, maximum: int = 80) -> str:
 
 
 def _contains_disallowed(text: str) -> bool:
-    words = set(re.findall(r"[\wÀ-ÿ]+", text.casefold()))
-    return bool(words & DISALLOWED_TERMS)
+    """Reject whole words, simple EN/NL plurals and separated multi-word terms."""
+    folded = text.casefold()
+    words = set(re.findall(r"[\wÀ-ÿ]+", folded))
+    stems = {word[:-len(end)] for word in words for end in ("s", "es", "en") if word.endswith(end)}
+    return bool((words | stems) & DISALLOWED_TERMS) or any(
+        phrase.search(folded) for phrase in _DISALLOWED_PHRASES
+    )
 
 
 def validate_target(

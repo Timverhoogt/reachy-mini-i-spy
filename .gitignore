@@ -10,6 +10,7 @@ dist/
 *.tar.gz
 .coverage
 htmlcov/
+.artifacts/
 config.json
 .env
 .env.*

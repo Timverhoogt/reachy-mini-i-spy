@@ -36,4 +36,11 @@ details form { display: grid; gap: .8rem; margin-top: 1rem; }
 .stop { position: fixed; z-index: 10; bottom: max(1rem, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(calc(100% - 2rem), 728px); border: 2px solid #ff9ca5; background: #c92739; color: white; box-shadow: 0 .8rem 2rem #000b; font-size: 1.1rem; }
 #toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); padding: .8rem 1rem; border-radius: .6rem; background: #8e2330; display: none; z-index: 20; width: min(90%, 32rem); }
 @media (max-width: 560px) { .two, .guess-row { grid-template-columns: 1fr; } .guess-row button { width: 100%; } body { padding-inline: .7rem; } }
+#game-scene { margin-bottom: 1.2rem; --screen-ink: #f7f8fc; --screen-dim: #b4bfd3; --serif: ui-rounded, system-ui, sans-serif; }
+#game-scene .hb-scene-canvas { width: 100%; }
+#game-scene .hb-scene-title { font-size: 1.15rem; font-weight: 750; line-height: 1.25; }
+#game-scene .hb-scene-caption { grid-template-columns: minmax(0, auto) minmax(0, 1fr); }
+#game-scene .hb-scene-chip { white-space: normal; overflow-wrap: anywhere; }
+#game-scene .hb-scene-detail { overflow-wrap: anywhere; }
+@media (max-width: 360px) { header { flex-wrap: wrap; } .badge { white-space: normal; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
